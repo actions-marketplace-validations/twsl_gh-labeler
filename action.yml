@@ -1,18 +1,26 @@
-name: The name of your action here
-description: Provide a description here
-author: Your name or organization here
+name: Github Labeler
+description: A Github Action to label your issues, prs and discussions with additional info
+author: twsl
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
   icon: heart
-  color: red
+  color: purple
 
 # Define your inputs here.
 inputs:
+  github-token:
+    description: "GitHub access token"
+    default: "${{ github.token }}"
+
+  config-path:
+    description: "Configuration file path"
+    default: ".github/gh-labeler.yaml"
+
   milliseconds:
     description: Your input description here
     required: true
-    default: '1000'
+    default: "1000"
 
 # Define your outputs here.
 outputs:
