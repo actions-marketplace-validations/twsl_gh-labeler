@@ -1,11 +1,12 @@
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
-	"baseUrl": ".",
-	"paths": {
-		"@/*": ["src/*"]
-	},
+
 	"compilerOptions": {
-		"rootDir": ".",
+		"baseUrl": ".",
+		"paths": {
+			"@/*": ["src/*"]
+		},
+		//"rootDir": ".",
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
 		"forceConsistentCasingInFileNames": true,
@@ -15,7 +16,7 @@
 		"resolveJsonModule": true,
 		"moduleDetection": "force",
 		"isolatedModules": true,
-		"verbatimModuleSyntax": true,
+		"verbatimModuleSyntax": false,
 
 		"strict": true,
 		"strictNullChecks": true,
@@ -26,8 +27,8 @@
 		"noUnusedParameters": false,
 		"pretty": true,
 
-		"module": "nodenext",
-		"moduleResolution": "nodenext",
+		"module": "CommonJS",
+		"moduleResolution": "node",
 		"outDir": "dist",
 		"sourceMap": true,
 

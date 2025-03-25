@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import App from "@/app";
-import ConfigValidator from "./validators/config";
+import ConfigValidator from "@/validators/config";
+import type Config from "@/models/config";
 
 /**
  * The main function for the action.
@@ -11,9 +12,9 @@ export async function run(): Promise<void> {
 	try {
 		// const ms: string = core.getInput("milliseconds");
 
-		async function getConfig() {
+		async function getConfig(): Promise<Config> {
 			const input = Object.fromEntries(
-				ConfigValidator.schemaKeys.map(key => [key, core.getInput(key)])
+				ConfigValidator.schemaKeys.map((key) => [key, core.getInput(key)]),
 			);
 			return await ConfigValidator.validate(input);
 		}

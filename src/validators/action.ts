@@ -1,6 +1,8 @@
 import actionSchema from "@/schemas/action";
-import { ValidationError, AnySchema } from "joi";
+import { ValidationError } from "joi";
+import type Actions from "@/models/actions";
 
+// biome-ignore lint/complexity/noStaticOnlyClass: <explanation>
 export default class ActionValidator {
 	/**
 	 * Validates the input against the action schema.

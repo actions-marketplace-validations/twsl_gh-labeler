@@ -24,6 +24,7 @@ class App {
 	}
 
 	async performActions(): Promise<void> {
+		// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 		const payload = github.context.payload as any; // Payload needs dynamic typing
 		const threadType: "issue" | "pr" = payload.issue ? "issue" : "pr";
 		const processOnly = this.config["process-only"];
@@ -58,6 +59,7 @@ class App {
 			};
 
 			await this.ensureUnlock(issue, lock, async () => {
+				// biome-ignore lint/style/noNonNullAssertion: <explanation>
 				for (let commentBody of actions.comment!) {
 					commentBody = commentBody.replace(
 						/{issue-author}/,

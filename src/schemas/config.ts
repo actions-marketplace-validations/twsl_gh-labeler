@@ -1,4 +1,4 @@
-import Joi, { StringSchema, Extension, type ObjectSchema } from "joi";
+import Joi, { type ObjectSchema } from "joi";
 
 // Define a Joi extension for 'processOnly'
 const extendedJoi: typeof Joi = Joi.extend({
@@ -7,12 +7,15 @@ const extendedJoi: typeof Joi = Joi.extend({
 	coerce: {
 		from: "string",
 		method(value: string) {
-			value = value.trim();
-			if (["issues", "prs"].includes(value)) {
-				value = value.slice(0, -1);
+			const trimmed = value.trim();
+			let new_value = "";
+			if (["issues", "prs"].includes(trimmed)) {
+				new_value = trimmed.slice(0, -1);
+			} else {
+				new_value = trimmed;
 			}
 
-			return { value };
+			return { value: new_value };
 		},
 	},
 }) as typeof Joi;
@@ -26,6 +29,7 @@ const configSchema: ObjectSchema = Joi.object({
 		.max(200)
 		.default(".github/label-actions.yml"),
 
+	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	"process-only": (extendedJoi as any)
 		.processOnly()
 		.valid("issue", "pr", "")

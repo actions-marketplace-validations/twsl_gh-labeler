@@ -1,7 +1,7 @@
-import Joi, { type Schema, type ObjectSchema } from "joi";
+import Joi, { type ObjectSchema } from "joi";
 
 // Define the structure of the actions object
-const actions: Schema = {
+const actions = {
 	close: Joi.boolean(),
 
 	reopen: Joi.boolean(),
@@ -11,7 +11,6 @@ const actions: Schema = {
 	unlock: Joi.boolean(),
 
 	"lock-reason": Joi.alternatives().try(
-		Joi.boolean().only(false),
 		Joi.string()
 			.trim()
 			.valid("resolved", "off-topic", "too heated", "spam", ""),
@@ -22,13 +21,11 @@ const actions: Schema = {
 	"number-of-reviewers": Joi.number(),
 
 	comment: Joi.alternatives().try(
-		Joi.boolean().only(false),
 		Joi.string().trim().valid(""),
 		Joi.array().items(Joi.string().trim().max(65536)).min(1).max(10).single(),
 	),
 
 	label: Joi.alternatives().try(
-		Joi.boolean().only(false),
 		Joi.string().trim().valid(""),
 		Joi.array()
 			.items(Joi.string().trim().max(50))
@@ -39,7 +36,6 @@ const actions: Schema = {
 	),
 
 	unlabel: Joi.alternatives().try(
-		Joi.boolean().only(false),
 		Joi.string().trim().valid(""),
 		Joi.array()
 			.items(Joi.string().trim().max(50))
