@@ -1,5 +1,6 @@
 import * as core from "@actions/core";
-import { wait } from "./wait.js";
+import App from "@/app";
+import ConfigValidator from "./validators/config";
 
 /**
  * The main function for the action.
@@ -8,18 +9,21 @@ import { wait } from "./wait.js";
  */
 export async function run(): Promise<void> {
 	try {
-		const ms: string = core.getInput("milliseconds");
+		// const ms: string = core.getInput("milliseconds");
 
-		// Debug logs are only output if the `ACTIONS_STEP_DEBUG` secret is true
-		core.debug(`Waiting ${ms} milliseconds ...`);
+		async function getConfig() {
+			const input = Object.fromEntries(
+				ConfigValidator.schemaKeys.map(key => [key, core.getInput(key)])
+			);
+			return await ConfigValidator.validate(input);
+		}
 
-		// Log the current timestamp, wait, then log the new timestamp
-		core.debug(new Date().toTimeString());
-		await wait(Number.parseInt(ms, 10));
-		core.debug(new Date().toTimeString());
+		const config = await getConfig();
+		const app = new App(config);
+		await app.performActions();
 
 		// Set outputs for other workflow steps to use
-		core.setOutput("time", new Date().toTimeString());
+		// core.setOutput("time", new Date().toTimeString());
 	} catch (error) {
 		// Fail the workflow run if an error occurs
 		if (error instanceof Error) core.setFailed(error.message);

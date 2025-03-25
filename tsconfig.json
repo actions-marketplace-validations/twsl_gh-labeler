@@ -3,22 +3,13 @@
 	"extends": "./tsconfig.base.json",
 	"baseUrl": ".",
 	"paths": {
-		"@/*": [
-			"src/*"
-		]
+		"@/*": ["src/*"]
 	},
 	"compilerOptions": {
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
-		"outDir": "./dist"
+		"outDir": "dist"
 	},
-	"exclude": [
-		"tests",
-		"coverage",
-		"dist",
-		"node_modules"
-	],
-	"include": [
-		"src"
-	]
+	"exclude": ["tests", "coverage", "dist", "node_modules"],
+	"include": ["src"]
 }
