@@ -4,14 +4,13 @@ import { IssueHandler } from "./handlers/issueHandler";
 import { PullRequestHandler } from "./handlers/pullRequestHandler";
 import { DiscussionHandler } from "./handlers/discussionHandler";
 import { ContentLabelHandler } from "./handlers/contentLabelHandler";
-import type Config from "./models/config";
+import type Config from "./models/ghConfig";
 
-async function run(): Promise<void> {
+export async function run(): Promise<void> {
 	try {
 		const config: Config = {
 			"github-token": core.getInput("github-token"),
 			"config-path": core.getInput("config-path"),
-			milliseconds: core.getInput("milliseconds"),
 		};
 
 		const context = github.context;

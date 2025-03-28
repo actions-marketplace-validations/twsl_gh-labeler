@@ -17,15 +17,10 @@ inputs:
     description: "Configuration file path"
     default: ".github/gh-labeler.yaml"
 
-  milliseconds:
-    description: Your input description here
-    required: true
-    default: "1000"
-
 # Define your outputs here.
 outputs:
-  time:
-    description: Your output description here
+  duration:
+    description: Duration of the action execution
 
 runs:
   using: node20

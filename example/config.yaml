@@ -1,0 +1,242 @@
+# GH-Labeler Configuration Example
+
+# Label-triggered actions (when labels are added)
+labels:
+  add:
+    bug:
+      # Comments to post when 'bug' label is added
+      comments:
+        - "Thank you for reporting this bug! Our team will investigate."
+        - "Please ensure you've provided steps to reproduce."
+      # Issues-specific actions for 'bug' label
+      issues:
+        assignees:
+          add:
+            - bugTeamMember
+        # Pin important bug reports
+        pin: true
+      # PR-specific actions for 'bug' label
+      prs:
+        reviewers:
+          add:
+            - bugReviewer
+            - techLead
+        # Request changes on bug fix PRs
+        request_changes: true
+    
+    enhancement:
+      comments:
+        - "Thanks for the enhancement request! We'll evaluate it soon."
+      issues:
+        # Assign to product team
+        assignees:
+          add:
+            - productManager
+            - designer
+      prs:
+        # Assign reviewers to enhancement PRs
+        reviewers:
+          add:
+            - featureReviewer
+            - productManager
+    
+    wontfix:
+      comments:
+        - "We've decided not to pursue this issue at this time."
+      issues:
+        # Close issue with reason
+        close: true
+        close_reason: "not-planned"
+      # Add lock capability
+      lock: true
+      lock_reason: "resolved"
+    
+    security:
+      comments:
+        - "This has been marked as a security issue. Our security team will review it."
+      issues:
+        assignees:
+          add:
+            - securityLead
+        # Set high priority
+        pin: true
+      prs:
+        # Ensure security team reviews
+        reviewers:
+          add:
+            - securityReviewer
+        # Add additional security labels to PRs
+        labels:
+          add:
+            - sensitive
+            - needs-security-review
+    
+    duplicate:
+      comments:
+        - "This has been marked as a duplicate. Please refer to the linked issue."
+      issues:
+        # Close duplicate issues
+        close: true
+        close_reason: "duplicate"
+      prs:
+        # Close duplicate PRs
+        close: true
+    
+    wip:
+      comments:
+        - "This is marked as work in progress. Please comment when ready for review."
+      prs:
+        # Add draft status for WIP PRs
+        draft: true
+        # Remove reviewers until ready
+        reviewers:
+          remove:
+            - allReviewers
+    
+    question:
+      comments:
+        - "Thanks for your question! Consider using Discussions for Q&A."
+      issues:
+        # Convert appropriate questions to discussions
+        convert_to_discussion: true
+    
+    "needs info":
+      comments:
+        - "We need more information to address this. Could you please provide additional details?"
+
+  # Label-triggered actions (when labels are removed)
+  remove:
+    wip:
+      comments:
+        - "This is no longer marked as work in progress. Reviewers have been notified."
+      prs:
+        # Remove draft status
+        draft: false
+        # Add reviewers now that it's ready
+        reviewers:
+          add:
+            - teamReviewer
+        # Remove any "hold" labels
+        labels:
+          remove:
+            - hold
+    
+    wontfix:
+      comments:
+        - "The wontfix label has been removed. This issue is being reconsidered."
+      issues:
+        # Reopen the issue when wontfix is removed
+        reopen: true
+        # Unlock the thread
+        unlock: true
+    
+    duplicate:
+      comments:
+        - "This is no longer marked as a duplicate."
+      issues:
+        # Reopen issues when no longer duplicates
+        reopen: true
+
+  # Default actions (fallback if not specified elsewhere)
+  default:
+    # Default for all issues
+    issues:
+      comments:
+        - "Thank you for your contribution to our project!"
+    # Default for all PRs
+    prs:
+      reviewers:
+        add:
+          - defaultReviewer
+      comments:
+        - "Thank you for your PR! It will be reviewed soon."
+    # Default for all discussions
+    discussions:
+      comments:
+        - "Thanks for starting this discussion!"
+
+# Regular expression triggered actions
+regex:
+  # Pattern to detect security vulnerabilities
+  "\\b(security|vulnerability|exploit|CVE|XSS|injection)\\b":
+    comments:
+      - "This appears to contain security-related content. Our security team has been notified."
+    # Add security label
+    labels:
+      add:
+        - security
+        - needs-triage
+    issues:
+      # Assign security team for triage
+      assignees:
+        add:
+          - securityTriage
+      # Pin important security issues
+      pin: true
+  
+  # Pattern to detect bug reports
+  "\\b(error|exception|crash|fails|broken)\\b":
+    comments:
+      - "This appears to be describing a bug. Thank you for the report."
+    labels:
+      add:
+        - potential-bug
+        - needs-triage
+  
+  # Pattern to detect feature requests
+  "\\b(feature request|enhancement|would be nice|please add)\\b":
+    comments:
+      - "This appears to be a feature request. We'll evaluate its priority."
+    labels:
+      add:
+        - enhancement
+        - needs-triage
+  
+  # Pattern to detect first-time contributors
+  "first (contribution|PR|pull request)":
+    comments:
+      - "Welcome to our project! Thank you for your first contribution."
+    prs:
+      labels:
+        add:
+          - first-time-contributor
+      # Assign first-time contributor mentor
+      assignees:
+        add:
+          - newContributorMentor
+  
+  # Pattern to detect tests needed
+  "\\b(no tests|missing tests|lacks tests)\\b":
+    comments:
+      - "This PR appears to need additional tests. Please add appropriate test coverage."
+    prs:
+      labels:
+        add:
+          - needs-tests
+      # Request changes
+      request_changes: true
+
+# Discussion-specific settings
+discussions:
+  # Category-specific actions
+  category:
+    Q&A:
+      comments:
+        - "Thanks for your question. Our team will respond soon."
+    Ideas:
+      comments:
+        - "Thank you for sharing your idea! The community can vote on this feature."
+
+issues:
+  assignees:
+    add:
+      - issueAssignee
+
+prs:
+  reviewers:
+    add:
+      - prReviewer
+  labels:
+    add:
+      - prLabel
+  comments:
