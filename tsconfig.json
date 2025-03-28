@@ -1,44 +1,24 @@
 {
 	"$schema": "https://json.schemastore.org/tsconfig",
-
-	"compilerOptions": {
-		"baseUrl": ".",
-		"paths": {
-			"@/*": ["src/*"]
-		},
-		//"rootDir": ".",
-		"esModuleInterop": true,
-		"allowSyntheticDefaultImports": true,
-		"forceConsistentCasingInFileNames": true,
-		"skipLibCheck": true,
-		"target": "ES2022",
-		"allowJs": true,
-		"resolveJsonModule": true,
-		"moduleDetection": "force",
-		"isolatedModules": true,
-		"verbatimModuleSyntax": false,
-
-		"strict": true,
-		"strictNullChecks": true,
-		"noUncheckedIndexedAccess": true,
-		"noImplicitOverride": true,
-		"noImplicitAny": true,
-		"noUnusedLocals": true,
-		"noUnusedParameters": false,
-		"pretty": true,
-
-		"module": "CommonJS",
-		"moduleResolution": "node",
-		"outDir": "dist",
-		"sourceMap": true,
-
-		"declaration": false,
-		"declarationMap": false,
-
-		"lib": ["ES2022"],
-
-		"newLine": "lf"
+	"extends": "./tsconfig.base.json",
+	"baseUrl": "./",
+	"paths": {
+		"@/*": [
+			"src/*"
+		]
 	},
-	"exclude": ["tests", "coverage", "dist", "node_modules"],
-	"include": ["src"]
+	"compilerOptions": {
+		"module": "ES2022",
+		"moduleResolution": "bundler",
+		"outDir": "./dist"
+	},
+	"exclude": [
+		"tests",
+		"coverage",
+		"dist",
+		"node_modules"
+	],
+	"include": [
+		"src"
+	]
 }

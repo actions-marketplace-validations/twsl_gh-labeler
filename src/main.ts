@@ -1,32 +1,78 @@
 import * as core from "@actions/core";
-import App from "@/app";
-import ConfigValidator from "@/validators/config";
-import type Config from "@/models/config";
+import * as github from "@actions/github";
+import { IssueHandler } from "./handlers/issueHandler";
+import { PullRequestHandler } from "./handlers/pullRequestHandler";
+import { DiscussionHandler } from "./handlers/discussionHandler";
+import { ContentLabelHandler } from "./handlers/contentLabelHandler";
+import type Config from "./models/config";
 
-/**
- * The main function for the action.
- *
- * @returns Resolves when the action is complete.
- */
-export async function run(): Promise<void> {
+async function run(): Promise<void> {
 	try {
-		// const ms: string = core.getInput("milliseconds");
+		const config: Config = {
+			"github-token": core.getInput("github-token"),
+			"config-path": core.getInput("config-path"),
+			milliseconds: core.getInput("milliseconds"),
+		};
 
-		async function getConfig(): Promise<Config> {
-			const input = Object.fromEntries(
-				ConfigValidator.schemaKeys.map((key) => [key, core.getInput(key)]),
+		const context = github.context;
+		const payload = context.payload;
+
+		// Handle content scanning for newly created or edited items
+		if (
+			["issues", "pull_request", "discussion"].some(
+				(type) =>
+					payload[type] && ["opened", "edited"].includes(payload.action),
+			)
+		) {
+			let handler: ContentLabelHandler;
+			let threadData;
+
+			if (payload.issue) {
+				handler = new ContentLabelHandler(config, "issue");
+				threadData = payload.issue;
+			} else if (payload.pull_request) {
+				handler = new ContentLabelHandler(config, "pr");
+				threadData = payload.pull_request;
+			} else if (payload.discussion) {
+				handler = new ContentLabelHandler(config, "discussion");
+				threadData = payload.discussion;
+			} else {
+				core.info("No issue, pull request or discussion found in payload");
+				return;
+			}
+
+			core.info(
+				`Scanning content of ${handler.getThreadType()} #${threadData.number}`,
 			);
-			return await ConfigValidator.validate(input);
+			await handler.performContentScanning(threadData);
+			return;
 		}
 
-		const config = await getConfig();
-		const app = new App(config);
-		await app.performActions();
+		// Continue with existing label-based action handling
+		if (payload.label && ["labeled", "unlabeled"].includes(payload.action)) {
+			let handler;
+			let threadData;
 
-		// Set outputs for other workflow steps to use
-		// core.setOutput("time", new Date().toTimeString());
+			if (payload.issue) {
+				handler = new IssueHandler(config);
+				threadData = payload.issue;
+			} else if (payload.pull_request) {
+				handler = new PullRequestHandler(config);
+				threadData = payload.pull_request;
+			} else if (payload.discussion) {
+				handler = new DiscussionHandler(config);
+				threadData = payload.discussion;
+			} else {
+				core.info("No issue, pull request or discussion found in payload");
+				return;
+			}
+
+			core.info(`Processing ${handler.getThreadType()} #${threadData.number}`);
+			await handler.performActions(payload, threadData);
+		}
 	} catch (error) {
-		// Fail the workflow run if an error occurs
 		if (error instanceof Error) core.setFailed(error.message);
 	}
 }
+
+run();

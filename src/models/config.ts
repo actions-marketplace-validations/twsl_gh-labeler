@@ -1,6 +1,6 @@
 interface Config {
 	"github-token": string;
-	"process-only"?: "issue" | "pr";
+	process?: Array<"issues" | "pr" | "discussions">;
 	"config-path": string;
 }
 export default Config;

@@ -45,6 +45,7 @@
 		"local-action": "pnpx @github/local-action . src/main.ts .env",
 		"package": "pnpx rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
 		"package:watch": "pnpm run package -- --watch",
+		"types": "ts-node ./scripts/types.ts",
 		"test": "NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 pnpx jest",
 		"all": "pnpm run format:write && pnpm run lint && pnpm run test && pnpm run coverage && pnpm run package"
 	},
@@ -68,9 +69,11 @@
 		"@types/lodash": "^4.17.16",
 		"@types/node": "^22.13.13",
 		"jest": "^29.7.0",
+		"joi-to-typescript": "^4.15.0",
 		"rollup": "^4.37.0",
 		"ts-jest": "^29.3.0",
 		"ts-jest-resolver": "^2.0.1",
+		"ts-node": "^10.9.2",
 		"typescript": "^5.8.2"
 	},
 	"optionalDependencies": {

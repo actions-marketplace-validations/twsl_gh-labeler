@@ -5,6 +5,11 @@
 [![Check dist/](https://github.com/actions/typescript-action/actions/workflows/check-dist.yml/badge.svg)](https://github.com/actions/typescript-action/actions/workflows/check-dist.yml)
 [![CodeQL](https://github.com/actions/typescript-action/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/actions/typescript-action/actions/workflows/codeql-analysis.yml)
 
+
+Based on:
+- https://github.com/toshimaru/label-actions
+- https://github.com/dessant/label-actions
+
 Use this template to bootstrap the creation of a TypeScript action. :rocket:
 
 This template includes compilation support, tests, a validation workflow,
