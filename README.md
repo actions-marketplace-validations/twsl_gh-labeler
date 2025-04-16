@@ -33,6 +33,8 @@ name: 'Github Labeler'
 on:
   issues:
     types: [labeled, unlabeled, opened, edited]
+  issue_comment:
+    types: [created, deleted]
   pull_request_target:
     types: [labeled, unlabeled, opened, edited]
   discussion:
@@ -48,7 +50,7 @@ jobs:
   action:
     runs-on: ubuntu-latest
     steps:
-      - uses: twsl/label-actions@v4
+      - uses: twsl/label-actions@v1
 ```
 
 ## Initial Setup
