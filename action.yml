@@ -16,6 +16,13 @@ inputs:
   config-path:
     description: "Configuration file path"
     default: ".github/gh-labeler.yaml"
+  
+  process:
+    description: "Process to run (issue, pr, discussion)"
+    default: |
+      issue
+      pr
+      discussion
 
 # Define your outputs here.
 outputs:
