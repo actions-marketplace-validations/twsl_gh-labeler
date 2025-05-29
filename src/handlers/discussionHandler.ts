@@ -1,16 +1,20 @@
 import * as core from "@actions/core";
+import type { DiscussionEvent } from "@octokit/webhooks-types";
 import _ from "lodash";
 import { AbstractHandler } from "./baseHandler";
-import type ThreadData from "@/models/threadData";
+import type Actions from "@/models/config/actions";
+import type { ThreadType } from "@/types/common";
 
 export class DiscussionHandler extends AbstractHandler {
-	getThreadType(): "issue" | "pr" | "discussion" {
+	getThreadType(): ThreadType {
 		return "discussion";
 	}
 
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	async performActions(payload: any, threadData: ThreadData): Promise<void> {
-		const actions = await this.getLabelActions(
+	async performActions(
+		payload: any,
+		threadData: DiscussionEvent["discussion"],
+	): Promise<void> {
+		const actions: Actions | undefined = await this.getLabelActions(
 			payload.label.name,
 			payload.action,
 			this.getThreadType(),
@@ -27,12 +31,12 @@ export class DiscussionHandler extends AbstractHandler {
 
 		// We could handle comments and labels for discussions
 		// using the GraphQL API when needed
-		if (actions.comment) {
+		if (actions.comments) {
 			core.debug("Commenting on discussion would go here");
 			// Implementation would use GraphQL API
 		}
 
-		if (actions.label) {
+		if (actions.labels) {
 			core.debug("Labeling discussion would go here");
 			// Implementation would use GraphQL API
 		}

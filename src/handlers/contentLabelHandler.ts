@@ -1,24 +1,33 @@
 import * as core from "@actions/core";
-import * as github from "@actions/github";
+import type {
+	IssuesEvent,
+	PullRequestEvent,
+	DiscussionEvent,
+} from "@octokit/webhooks-types";
 import _ from "lodash";
 import { AbstractHandler } from "./baseHandler";
-import type ThreadData from "@/models/threadData";
-import type ContentRule from "@/models/contentRule";
-import type Issue from "@/models/issue";
+import type ContentRule from "@/models/config/contentRule";
+import type Issue from "@/models/config/issue";
+import type { ThreadType } from "@/types/common";
 
 export class ContentLabelHandler extends AbstractHandler {
-	getThreadType(): "issue" | "pr" | "discussion" {
+	getThreadType(): ThreadType {
 		return this.threadType;
 	}
 
-	private threadType: "issue" | "pr" | "discussion";
+	private threadType: ThreadType;
 
-	constructor(config: any, threadType: "issue" | "pr" | "discussion") {
+	constructor(config: any, threadType: ThreadType) {
 		super(config);
 		this.threadType = threadType;
 	}
 
-	async performContentScanning(threadData: ThreadData): Promise<void> {
+	async performContentScanning(
+		threadData:
+			| IssuesEvent["issue"]
+			| PullRequestEvent["pull_request"]
+			| DiscussionEvent["discussion"],
+	): Promise<void> {
 		const contentRules = await this.getContentRules();
 		if (!contentRules || contentRules.length === 0) {
 			core.debug("No content rules found");
@@ -74,7 +83,13 @@ export class ContentLabelHandler extends AbstractHandler {
 
 	// This method is required by the abstract class but not used
 	// for content scanning operations
-	async performActions(payload: any, threadData: ThreadData): Promise<void> {
+	async performActions(
+		payload: any,
+		threadData:
+			| IssuesEvent["issue"]
+			| PullRequestEvent["pull_request"]
+			| DiscussionEvent["discussion"],
+	): Promise<void> {
 		await this.performContentScanning(threadData);
 	}
 }

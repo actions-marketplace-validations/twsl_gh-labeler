@@ -125,7 +125,7 @@ So, what are you waiting for? Go ahead and start customizing your action!
 
      ```bash
      # npx @github/local action <action-yaml-path> <entrypoint> <dotenv-file>
-     npx @github/local-action . src/main.ts .env
+     pnpx @github/local-action . src/main.ts .env
      ```
 
    You can provide a `.env` file to the `local-action` CLI to set environment

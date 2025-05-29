@@ -1,17 +1,18 @@
 import * as core from "@actions/core";
+import type { IssuesEvent } from "@octokit/webhooks-types";
 import _ from "lodash";
 import { AbstractHandler } from "./baseHandler";
-import type Issue from "@/models/issue";
-import type ThreadData from "@/models/threadData";
-import type LockInfo from "@/models/lockInfo";
+import type { ThreadType } from "@/types/common";
 
 export class IssueHandler extends AbstractHandler {
-	getThreadType(): "issue" | "pr" | "discussion" {
+	getThreadType(): ThreadType {
 		return "issue";
 	}
 
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	async performActions(payload: any, threadData: ThreadData): Promise<void> {
+	async performActions(
+		payload: any,
+		threadData: IssuesEvent["issue"],
+	): Promise<void> {
 		const actions = await this.getLabelActions(
 			payload.label.name,
 			payload.action,
@@ -31,7 +32,7 @@ export class IssueHandler extends AbstractHandler {
 
 		if (actions.comment) {
 			core.debug("Commenting on issue");
-			const lock: LockInfo = {
+			const lock = {
 				active: threadData.locked,
 				reason: threadData.active_lock_reason || null,
 			};

@@ -21,9 +21,8 @@ export default {
 	// },
 	extensionsToTreatAsEsm: [".ts"],
 	moduleFileExtensions: ["ts", "js"],
-	preset: "ts-jest",
+	preset: "ts-jest/presets/default-esm",
 	reporters: ["default"],
-	resolver: "ts-jest-resolver",
 	testEnvironment: "node",
 	testMatch: ["**/*.test.ts"],
 	testPathIgnorePatterns: ["/dist/", "/node_modules/"],
@@ -36,5 +35,9 @@ export default {
 			},
 		],
 	},
+	moduleNameMapper: {
+		"^@/(.*)$": "<rootDir>/src/$1",
+	},
+	transformIgnorePatterns: ["node_modules/(?!(.*\\.mjs$))"],
 	verbose: true,
 };

@@ -27,7 +27,7 @@
 		"noUnusedParameters": false,
 		"pretty": true,
 
-		"module": "CommonJS",
+		"module": "ESNext",
 		"moduleResolution": "node",
 		"outDir": "dist",
 		"sourceMap": true,

@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import * as github from "@actions/github";
 import * as fs from "node:fs"; // Import fs for file operations
+import { parse } from "yaml";
 import { IssueHandler } from "@/handlers/issueHandler";
 import { PullRequestHandler } from "@/handlers/pullRequestHandler";
 import { DiscussionHandler } from "@/handlers/discussionHandler";
@@ -21,7 +22,7 @@ async function loadConfig(configPath: string): Promise<Config> {
 			return Promise.resolve({} as Config);
 		}
 		const configFileContent = fs.readFileSync(configPath, "utf8");
-		return Promise.resolve(JSON.parse(configFileContent) as Config);
+		return Promise.resolve(parse(configFileContent) as Config);
 	} catch (e: unknown) {
 		core.setFailed(
 			`Failed to load or parse configuration file at ${configPath}: ${e}`,
@@ -34,8 +35,8 @@ export async function run(): Promise<void> {
 	try {
 		const processInput = core.getInput("process");
 		const processArray = processInput
-			? (processInput.split(",").map((item) => item.trim()) as Array<
-					"issues" | "pr" | "discussions"
+			? (processInput.split(/,|\n/).map((item) => item.trim()) as Array<
+					"issue" | "pr" | "discussion"
 				>)
 			: undefined;
 

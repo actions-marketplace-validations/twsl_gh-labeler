@@ -1,17 +1,26 @@
 import * as github from "@actions/github";
+import type { WebhookPayload } from "@actions/github/lib/interfaces";
+import type {
+	IssuesEvent,
+	PullRequestEvent,
+	DiscussionEvent,
+} from "@octokit/webhooks-types";
 import type Config from "@/models/config";
 import type Issue from "@/models/config/issues";
-import type LockInfo from "@/models/lockInfo";
 import type Actions from "@/models/config/actions";
-import type ThreadData from "@/models/threadData";
-
-import * as yaml from "js-yaml";
+import type { ThreadType } from "@/types/common";
+import { parse } from "yaml";
 import _ from "lodash";
 import actionSchema from "@/schemas/action";
 
 export interface BaseHandler {
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	performActions(payload: any, threadData: ThreadData): Promise<void>;
+	performActions(
+		payload: WebhookPayload,
+		threadData:
+			| IssuesEvent["issue"]
+			| PullRequestEvent["pull_request"]
+			| DiscussionEvent["discussion"],
+	): Promise<void>;
 }
 
 export abstract class AbstractHandler implements BaseHandler {
@@ -27,15 +36,20 @@ export abstract class AbstractHandler implements BaseHandler {
 		this.repo = github.context.repo.repo;
 	}
 
-	abstract getThreadType(): "issue" | "pr" | "discussion";
+	abstract getThreadType(): ThreadType;
 
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
-	abstract performActions(payload: any, threadData: ThreadData): Promise<void>;
+	abstract performActions(
+		payload: WebhookPayload,
+		threadData:
+			| IssuesEvent["issue"]
+			| PullRequestEvent["pull_request"]
+			| DiscussionEvent["discussion"],
+	): Promise<void>;
 
 	protected async getLabelActions(
 		label: string,
 		event: string,
-		threadType: "issue" | "pr" | "discussion",
+		threadType: ThreadType,
 	): Promise<Actions | undefined> {
 		if (event === "unlabeled") {
 			label = `-${label}`;
@@ -58,10 +72,9 @@ export abstract class AbstractHandler implements BaseHandler {
 		}
 	}
 
-	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	protected async getActionConfig(): Promise<Record<string, any>> {
 		const configData = await this.getContent();
-		const input = yaml.load(Buffer.from(configData, "base64").toString());
+		const input = parse(Buffer.from(configData, "base64").toString());
 		if (!input) {
 			throw new Error(`Empty configuration file (${this.configPath})`);
 		}
@@ -75,7 +88,6 @@ export abstract class AbstractHandler implements BaseHandler {
 				path: this.configPath,
 			});
 			return response.data.content as string;
-			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 		} catch (err: any) {
 			throw err.status === 404
 				? new Error(`Missing configuration file (${this.configPath})`)
@@ -85,7 +97,7 @@ export abstract class AbstractHandler implements BaseHandler {
 
 	protected async ensureUnlock(
 		issue: Issue,
-		lock: LockInfo,
+		lock: { active: boolean; reason?: string | null },
 		action: () => Promise<void>,
 	): Promise<void> {
 		if (lock.active) {

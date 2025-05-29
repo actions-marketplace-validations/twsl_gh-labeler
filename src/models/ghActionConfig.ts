@@ -1,6 +1,8 @@
+import type { ThreadType } from "@/types/common";
+
 interface GHActionConfig {
 	"github-token": string;
-	process?: Array<"issues" | "pr" | "discussions">;
+	process?: Array<ThreadType>;
 	"config-path": string;
 }
 export default GHActionConfig;
