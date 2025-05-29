@@ -1,6 +1,6 @@
-interface Config {
+interface GHActionConfig {
 	"github-token": string;
 	process?: Array<"issues" | "pr" | "discussions">;
 	"config-path": string;
 }
-export default Config;
+export default GHActionConfig;

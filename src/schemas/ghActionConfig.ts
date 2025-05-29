@@ -1,10 +1,13 @@
 import Joi, { type ObjectSchema } from "joi";
 
 // Define the configuration schema
-const ghConfigSchema: ObjectSchema = Joi.object({
+const ghActionConfigSchema: ObjectSchema = Joi.object({
 	"github-token": Joi.string().trim().max(100),
 
-	path: Joi.string().trim().max(200).default(".github/gh-labeler.yaml"),
+	"config-path": Joi.string()
+		.trim()
+		.max(200)
+		.default(".github/gh-labeler.yaml"),
 
 	process: Joi.array()
 		.items(Joi.string().trim().valid("issue", "pr", "discussion"))
@@ -15,4 +18,4 @@ const ghConfigSchema: ObjectSchema = Joi.object({
 });
 
 // Export the schema
-export default ghConfigSchema;
+export default ghActionConfigSchema;
