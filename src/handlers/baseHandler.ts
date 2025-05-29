@@ -1,14 +1,13 @@
 import * as github from "@actions/github";
 import type Config from "@/models/config";
-import type Issue from "@/models/issue";
+import type Issue from "@/models/config/issues";
 import type LockInfo from "@/models/lockInfo";
-import type Actions from "@/models/actions";
+import type Actions from "@/models/config/actions";
 import type ThreadData from "@/models/threadData";
 
-import * as core from "@actions/core";
 import * as yaml from "js-yaml";
 import _ from "lodash";
-import ActionValidator from "@/validators/action";
+import actionSchema from "@/schemas/action";
 
 export interface BaseHandler {
 	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
@@ -59,13 +58,14 @@ export abstract class AbstractHandler implements BaseHandler {
 		}
 	}
 
+	// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 	protected async getActionConfig(): Promise<Record<string, any>> {
 		const configData = await this.getContent();
 		const input = yaml.load(Buffer.from(configData, "base64").toString());
 		if (!input) {
 			throw new Error(`Empty configuration file (${this.configPath})`);
 		}
-		return ActionValidator.validate(input);
+		return actionSchema.validate(input);
 	}
 
 	protected async getContent(): Promise<string> {
@@ -75,6 +75,7 @@ export abstract class AbstractHandler implements BaseHandler {
 				path: this.configPath,
 			});
 			return response.data.content as string;
+			// biome-ignore lint/suspicious/noExplicitAny: <explanation>
 		} catch (err: any) {
 			throw err.status === 404
 				? new Error(`Missing configuration file (${this.configPath})`)
