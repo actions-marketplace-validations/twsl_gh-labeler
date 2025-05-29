@@ -6,6 +6,7 @@ import type {
 	DiscussionEvent,
 } from "@octokit/webhooks-types";
 import type Config from "@/models/config";
+import type GHActionConfig from "@/models/ghActionConfig";
 import type Issue from "@/models/config/issues";
 import type Actions from "@/models/config/actions";
 import type { ThreadType } from "@/types/common";
@@ -25,13 +26,15 @@ export interface BaseHandler {
 
 export abstract class AbstractHandler implements BaseHandler {
 	protected config: Config;
+	protected actionConfig: GHActionConfig;
 	protected client: ReturnType<typeof github.getOctokit>;
 	protected owner: string;
 	protected repo: string;
 
-	constructor(config: Config) {
+	constructor(config: Config, actionConfig: GHActionConfig) {
 		this.config = config;
-		this.client = github.getOctokit(config["github-token"]);
+		this.actionConfig = actionConfig;
+		this.client = github.getOctokit(actionConfig["github-token"]);
 		this.owner = github.context.repo.owner;
 		this.repo = github.context.repo.repo;
 	}
@@ -72,27 +75,8 @@ export abstract class AbstractHandler implements BaseHandler {
 		}
 	}
 
-	protected async getActionConfig(): Promise<Record<string, any>> {
-		const configData = await this.getContent();
-		const input = parse(Buffer.from(configData, "base64").toString());
-		if (!input) {
-			throw new Error(`Empty configuration file (${this.configPath})`);
-		}
-		return actionSchema.validate(input);
-	}
-
-	protected async getContent(): Promise<string> {
-		try {
-			const response = await this.client.rest.repos.getContent({
-				...github.context.repo,
-				path: this.configPath,
-			});
-			return response.data.content as string;
-		} catch (err: any) {
-			throw err.status === 404
-				? new Error(`Missing configuration file (${this.configPath})`)
-				: err;
-		}
+	protected async getActionConfig(): Promise<GHActionConfig> {
+		return Promise.resolve(this.actionConfig as GHActionConfig);
 	}
 
 	protected async ensureUnlock(
@@ -136,9 +120,5 @@ export abstract class AbstractHandler implements BaseHandler {
 		} else {
 			await action();
 		}
-	}
-
-	protected get configPath(): string {
-		return this.config["config-path"];
 	}
 }
