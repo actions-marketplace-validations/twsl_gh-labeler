@@ -69,7 +69,7 @@ export async function run(): Promise<void> {
 
 		// Handle content scanning for newly created or edited items
 		if (
-			["issues", "pull_request", "discussion"].some(
+			["issue", "pull_request", "discussion"].some(
 				(type) =>
 					payload[type as keyof typeof payload] &&
 					payload.action !== undefined &&
@@ -83,13 +83,13 @@ export async function run(): Promise<void> {
 				| DiscussionEvent["discussion"];
 
 			if ("issue" in payload && payload.issue) {
-				handler = new ContentLabelHandler(config, "issue");
+				handler = new ContentLabelHandler(config, actionConfig, "issue");
 				threadData = payload.issue;
 			} else if ("pull_request" in payload && payload.pull_request) {
-				handler = new ContentLabelHandler(config, "pr");
+				handler = new ContentLabelHandler(config, actionConfig, "pr");
 				threadData = payload.pull_request;
 			} else if ("discussion" in payload && payload.discussion) {
-				handler = new ContentLabelHandler(config, "discussion");
+				handler = new ContentLabelHandler(config, actionConfig, "discussion");
 				threadData = payload.discussion;
 			} else {
 				core.info("No issue, pull request or discussion found in payload");
@@ -117,13 +117,13 @@ export async function run(): Promise<void> {
 				| DiscussionEvent["discussion"];
 
 			if ("issue" in payload && payload.issue) {
-				handler = new IssueHandler(config);
+				handler = new IssueHandler(config, actionConfig);
 				threadData = payload.issue;
 			} else if ("pull_request" in payload && payload.pull_request) {
-				handler = new PullRequestHandler(config);
+				handler = new PullRequestHandler(config, actionConfig);
 				threadData = payload.pull_request;
 			} else if ("discussion" in payload && payload.discussion) {
-				handler = new DiscussionHandler(config);
+				handler = new DiscussionHandler(config, actionConfig);
 				threadData = payload.discussion;
 			} else {
 				core.info("No issue, pull request or discussion found in payload");

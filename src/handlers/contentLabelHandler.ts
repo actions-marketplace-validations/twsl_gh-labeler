@@ -10,6 +10,8 @@ import type ContentRule from "@/models/config/contentRule";
 import type Issue from "@/models/config/issue";
 import type { ThreadType } from "@/types/common";
 
+import type GHActionConfig from "@/models/ghActionConfig";
+
 export class ContentLabelHandler extends AbstractHandler {
 	getThreadType(): ThreadType {
 		return this.threadType;
@@ -17,8 +19,12 @@ export class ContentLabelHandler extends AbstractHandler {
 
 	private threadType: ThreadType;
 
-	constructor(config: any, threadType: ThreadType) {
-		super(config);
+	constructor(
+		config: any,
+		actionConfig: GHActionConfig,
+		threadType: ThreadType,
+	) {
+		super(config, actionConfig);
 		this.threadType = threadType;
 	}
 
