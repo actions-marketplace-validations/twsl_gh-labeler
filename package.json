@@ -69,7 +69,7 @@
 		"@types/js-yaml": "^4.0.9",
 		"@types/lodash": "^4.17.18",
 		"@types/node": "^22.15.32",
-		"jest": "^30.0.2",
+		"jest": "^30.0.3",
 		"joi-to-typescript": "^4.15.0",
 		"rollup": "^4.44.0",
 		"ts-jest": "^29.4.0",
