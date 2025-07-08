@@ -80,8 +80,8 @@ importers:
         version: 5.8.3
     optionalDependencies:
       '@rollup/rollup-linux-x64-gnu':
-        specifier: ^4.44.1
-        version: 4.44.1
+        specifier: ^4.44.2
+        version: 4.44.2
 
 packages:
 
@@ -1020,6 +1020,11 @@ packages:
 
   '@rollup/rollup-linux-x64-gnu@4.44.1':
     resolution: {integrity: sha512-EtnsrmZGomz9WxK1bR5079zee3+7a+AdFlghyd6VbAjgRJDbTANJ9dcPIPAi76uG05micpEL+gPGmAKYTschQw==}
+    cpu: [x64]
+    os: [linux]
+
+  '@rollup/rollup-linux-x64-gnu@4.44.2':
+    resolution: {integrity: sha512-/bXb0bEsWMyEkIsUL2Yt5nFB5naLAwyOWMEviQfQY1x3l5WsLKgvZf66TM7UTfED6erckUVUJQ/jJ1FSpm3pRQ==}
     cpu: [x64]
     os: [linux]
 
@@ -3779,6 +3784,9 @@ snapshots:
     optional: true
 
   '@rollup/rollup-linux-x64-gnu@4.44.1':
+    optional: true
+
+  '@rollup/rollup-linux-x64-gnu@4.44.2':
     optional: true
 
   '@rollup/rollup-linux-x64-musl@4.44.1':
