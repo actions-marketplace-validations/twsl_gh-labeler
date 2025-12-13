@@ -6,6 +6,7 @@ import { IssueHandler } from "@/handlers/issueHandler";
 import { PullRequestHandler } from "@/handlers/pullRequestHandler";
 import { DiscussionHandler } from "@/handlers/discussionHandler";
 import { ContentLabelHandler } from "@/handlers/contentLabelHandler";
+import { RegexHandler } from "@/handlers/regexHandler";
 import type GHActionConfig from "@/models/ghActionConfig";
 import ghActionConfigSchema from "@/schemas/ghActionConfig"; // Import the schema
 import type Config from "@/models/config"; // Import type for the loaded configuration file
@@ -76,30 +77,48 @@ export async function run(): Promise<void> {
 					["opened", "edited"].includes(payload.action),
 			)
 		) {
-			let handler: ContentLabelHandler;
+			let contentHandler: ContentLabelHandler;
+			const regexHandler = new RegexHandler(config, actionConfig);
 			let threadData:
 				| IssuesEvent["issue"]
 				| PullRequestEvent["pull_request"]
 				| DiscussionEvent["discussion"];
+			let threadType: "issue" | "pr" | "discussion";
 
 			if ("issue" in payload && payload.issue) {
-				handler = new ContentLabelHandler(config, actionConfig, "issue");
+				contentHandler = new ContentLabelHandler(config, actionConfig, "issue");
 				threadData = payload.issue;
+				threadType = "issue";
 			} else if ("pull_request" in payload && payload.pull_request) {
-				handler = new ContentLabelHandler(config, actionConfig, "pr");
+				contentHandler = new ContentLabelHandler(config, actionConfig, "pr");
 				threadData = payload.pull_request;
+				threadType = "pr";
 			} else if ("discussion" in payload && payload.discussion) {
-				handler = new ContentLabelHandler(config, actionConfig, "discussion");
+				contentHandler = new ContentLabelHandler(
+					config,
+					actionConfig,
+					"discussion",
+				);
 				threadData = payload.discussion;
+				threadType = "discussion";
 			} else {
 				core.info("No issue, pull request or discussion found in payload");
 				return;
 			}
 
 			core.info(
-				`Scanning content of ${handler.getThreadType()} #${threadData.number}`,
+				`Scanning content of ${contentHandler.getThreadType()} #${threadData.number}`,
 			);
-			await handler.performContentScanning(threadData);
+
+			// Perform content scanning using the ContentLabelHandler
+			await contentHandler.performContentScanning(threadData);
+
+			// Also perform regex-based scanning and actions
+			core.info(
+				`Processing regex rules for ${threadType} #${threadData.number}`,
+			);
+			await regexHandler.performRegexScanning(threadData, threadType);
+
 			return;
 		}
 
@@ -119,19 +138,30 @@ export async function run(): Promise<void> {
 			if ("issue" in payload && payload.issue) {
 				handler = new IssueHandler(config, actionConfig);
 				threadData = payload.issue;
+				await handler.performActions(
+					payload,
+					threadData as IssuesEvent["issue"],
+				);
 			} else if ("pull_request" in payload && payload.pull_request) {
 				handler = new PullRequestHandler(config, actionConfig);
 				threadData = payload.pull_request;
+				await handler.performActions(
+					payload,
+					threadData as PullRequestEvent["pull_request"],
+				);
 			} else if ("discussion" in payload && payload.discussion) {
 				handler = new DiscussionHandler(config, actionConfig);
 				threadData = payload.discussion;
+				await handler.performActions(
+					payload,
+					threadData as DiscussionEvent["discussion"],
+				);
 			} else {
 				core.info("No issue, pull request or discussion found in payload");
 				return;
 			}
 
-			core.info(`Processing ${handler.getThreadType()} #${threadData.number}`);
-			await handler.performActions(payload, threadData);
+			// Remove the generic call that was causing type issues
 		}
 	} catch (error) {
 		if (error instanceof Error) core.setFailed(error.message);

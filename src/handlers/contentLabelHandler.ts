@@ -6,11 +6,15 @@ import type {
 } from "@octokit/webhooks-types";
 import _ from "lodash";
 import { AbstractHandler } from "./baseHandler";
-import type ContentRule from "@/models/config/contentRule";
-import type Issue from "@/models/config/issue";
 import type { ThreadType } from "@/types/common";
 
 import type GHActionConfig from "@/models/ghActionConfig";
+
+interface ContentRule {
+	pattern: string;
+	label: string;
+	caseSensitive?: boolean;
+}
 
 export class ContentLabelHandler extends AbstractHandler {
 	getThreadType(): ThreadType {
@@ -48,12 +52,6 @@ export class ContentLabelHandler extends AbstractHandler {
 			scanBody ? threadData.body || "" : "",
 		].join("\n");
 
-		const issue: Issue = {
-			owner: this.owner,
-			repo: this.repo,
-			issue_number: threadData.number,
-		};
-
 		const currentLabels = threadData.labels.map((label) => label.name);
 		const labelsToAdd: string[] = [];
 
@@ -76,15 +74,36 @@ export class ContentLabelHandler extends AbstractHandler {
 	}
 
 	private async getContentRules(): Promise<ContentRule[]> {
-		const actionConfig = await this.getActionConfig();
-		const contentConfig = actionConfig["content-labeling"] || {};
+		const regexConfig = this.config.regex || {};
 
-		let rulesKey = "rules";
-		if (this.threadType === "issue") rulesKey = "issues";
-		else if (this.threadType === "pr") rulesKey = "prs";
-		else if (this.threadType === "discussion") rulesKey = "discussions";
+		// Convert regex patterns to content rules
+		const contentRules: ContentRule[] = [];
 
-		return contentConfig[rulesKey] || [];
+		for (const [pattern, actions] of Object.entries(regexConfig)) {
+			// Check if actions has labels with add property
+			if (actions && typeof actions === "object" && "labels" in actions) {
+				const labelsConfig = (actions as any).labels;
+				if (
+					labelsConfig &&
+					typeof labelsConfig === "object" &&
+					"add" in labelsConfig
+				) {
+					const labelsToAdd = labelsConfig.add;
+					if (Array.isArray(labelsToAdd) && labelsToAdd.length > 0) {
+						// Create a rule for each label to add
+						for (const label of labelsToAdd) {
+							contentRules.push({
+								pattern,
+								label: label as string,
+								caseSensitive: false, // Default to case insensitive
+							});
+						}
+					}
+				}
+			}
+		}
+
+		return contentRules;
 	}
 
 	// This method is required by the abstract class but not used

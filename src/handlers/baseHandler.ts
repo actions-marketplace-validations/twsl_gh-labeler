@@ -64,15 +64,51 @@ export abstract class AbstractHandler implements BaseHandler {
 					? "prs"
 					: "discussions";
 
-		const actionConfig = await this.getActionConfig();
-		const action = actionConfig[label];
-		if (action) {
-			const threadActions = action[threadKey];
-			if (threadActions) {
-				Object.assign(action, threadActions);
-			}
-			return action;
+		// Get the config which should have labels.add, labels.remove, and labels.default
+		const labels = this.config.labels;
+		if (!labels) {
+			return undefined;
 		}
+
+		// Determine if we're adding or removing a label
+		const isRemoval = label.startsWith("-");
+		const cleanLabel = isRemoval ? label.substring(1) : label;
+		
+		// Get the appropriate label config
+		let labelConfig: Actions | undefined;
+		
+		if (isRemoval && labels.remove) {
+			// For label removal, check labels.remove
+			if (typeof labels.remove === "object" && !Array.isArray(labels.remove)) {
+				labelConfig = labels.remove[cleanLabel];
+			}
+		} else if (!isRemoval && labels.add) {
+			// For label addition, check labels.add
+			if (typeof labels.add === "object" && !Array.isArray(labels.add)) {
+				labelConfig = labels.add[cleanLabel];
+			}
+		}
+		
+		// If no specific config found, check default
+		if (!labelConfig && labels.default) {
+			labelConfig = labels.default[cleanLabel];
+		}
+
+		if (!labelConfig) {
+			return undefined;
+		}
+
+		// Merge root-level actions with thread-specific actions
+		// Thread-specific actions should override root-level ones
+		const mergedConfig = { ...labelConfig };
+		const threadActions = labelConfig[threadKey];
+		
+		if (threadActions) {
+			// Deep merge thread-specific actions
+			Object.assign(mergedConfig, threadActions);
+		}
+
+		return mergedConfig;
 	}
 
 	protected async getActionConfig(): Promise<GHActionConfig> {
