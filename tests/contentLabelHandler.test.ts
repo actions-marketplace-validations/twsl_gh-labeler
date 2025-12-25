@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 // Mock dependencies BEFORE importing
 jest.unstable_mockModule("@actions/core", () => ({
@@ -29,8 +29,9 @@ jest.unstable_mockModule("@actions/github", () => ({
 const { ContentLabelHandler } = await import("../src/handlers/contentLabelHandler");
 const core = await import("@actions/core");
 const github = await import("@actions/github");
-import type Config from "../src/models/config";
-import type GHActionConfig from "../src/models/ghActionConfig";
+
+import type Config from "../src/models/internal/config";
+import type GHActionConfig from "../src/models/internal/ghActionConfig";
 
 describe("ContentLabelHandler", () => {
 	let mockOctokit: any;

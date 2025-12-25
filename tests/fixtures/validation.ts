@@ -9,11 +9,13 @@ export const mockValidationSuccess = {
 	},
 };
 
-export const createMockValidationSuccess = (overrides?: Partial<{
-	"github-token": string;
-	"config-path": string;
-	process: Array<"issue" | "pr" | "discussion">;
-}>) => ({
+export const createMockValidationSuccess = (
+	overrides?: Partial<{
+		"github-token": string;
+		"config-path": string;
+		process: Array<"issue" | "pr" | "discussion">;
+	}>,
+) => ({
 	error: undefined,
 	value: {
 		"github-token": "test-token",
@@ -43,7 +45,7 @@ export const mockSchemaValidate = jest.fn((input: any, _options?: any) => {
 		"config-path": input["config-path"] || ".github/gh-labeler.yaml",
 		process: input.process && input.process.length > 0 ? input.process : ["issue", "pr", "discussion"],
 	};
-	
+
 	return {
 		error: undefined,
 		value: result,

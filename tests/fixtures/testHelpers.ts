@@ -1,4 +1,3 @@
-import type { WebhookPayload } from "@actions/github/lib/interfaces";
 import { jest } from "@jest/globals";
 import type { DiscussionEvent, IssuesEvent, PullRequestEvent } from "@octokit/webhooks-types";
 
@@ -89,7 +88,6 @@ export const testInputConfigs = {
 // Setup and teardown functions for unified tests
 export const setupDefaultMocks = async () => {
 	const core = await import("./core");
-	const github = await import("./github");
 	const fs = await import("./fs");
 	const handlers = await import("./handlers");
 	const validation = await import("./validation");
@@ -111,7 +109,7 @@ export const setupDefaultMocks = async () => {
 	});
 	fs.existsSync.mockReturnValue(true);
 	fs.readFileSync.mockReturnValue(JSON.stringify(sampleConfig));
-	yaml.parse.mockReturnValue(sampleConfig);
+	(yaml.parse as jest.Mock).mockReturnValue(sampleConfig);
 
 	// Setup smart validation mock
 	validation.default.validate.mockImplementation((input: any) => {
@@ -123,7 +121,7 @@ export const setupDefaultMocks = async () => {
 	handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue("issue");
 	handlers.mockPullRequestHandlerInstance.getThreadType.mockReturnValue("pull_request");
 	handlers.mockDiscussionHandlerInstance.getThreadType.mockReturnValue("discussion");
-	
+
 	// Reset handler constructor mocks to return instances (not throw)
 	handlers.ContentLabelHandler.mockImplementation(() => handlers.mockContentLabelHandlerInstance);
 	handlers.IssueHandler.mockImplementation(() => handlers.mockIssueHandlerInstance);

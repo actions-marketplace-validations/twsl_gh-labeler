@@ -53,36 +53,36 @@ export async function run(): Promise<void> {
 		const payload = context.payload as IssuesEvent | PullRequestEvent | DiscussionEvent;
 
 		// Handle content scanning for newly created or edited items
-	if (payload.action !== undefined && ["opened", "edited"].includes(payload.action)) {
-		// Check if we have valid thread data
-		const hasThreadData = ["issue", "pull_request", "discussion"].some(
-			(type) => payload[type as keyof typeof payload],
-		);
+		if (payload.action !== undefined && ["opened", "edited"].includes(payload.action)) {
+			// Check if we have valid thread data
+			const hasThreadData = ["issue", "pull_request", "discussion"].some(
+				(type) => payload[type as keyof typeof payload],
+			);
 
-		if (!hasThreadData) {
-			core.info("No issue, pull request or discussion found in payload");
-			return;
-		}
+			if (!hasThreadData) {
+				core.info("No issue, pull request or discussion found in payload");
+				return;
+			}
 
-		let contentHandler: ContentLabelHandler;
-		const regexHandler = new RegexHandler(config, actionConfig);
-		let threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"];
-		let threadType: "issue" | "pr" | "discussion";
+			let contentHandler: ContentLabelHandler;
+			const regexHandler = new RegexHandler(config, actionConfig);
+			let threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"];
+			let threadType: "issue" | "pr" | "discussion";
 
-		if ("issue" in payload && payload.issue) {
-			contentHandler = new ContentLabelHandler(config, actionConfig, "issue");
-			threadData = payload.issue;
-			threadType = "issue";
-		} else if ("pull_request" in payload && payload.pull_request) {
-			contentHandler = new ContentLabelHandler(config, actionConfig, "pr");
-			threadData = payload.pull_request;
-			threadType = "pr";
-		} else if ("discussion" in payload && payload.discussion) {
-			contentHandler = new ContentLabelHandler(config, actionConfig, "discussion");
-			threadData = payload.discussion;
-			threadType = "discussion";
-		} else {
-			// This should not be reached since we checked hasThreadData above
+			if ("issue" in payload && payload.issue) {
+				contentHandler = new ContentLabelHandler(config, actionConfig, "issue");
+				threadData = payload.issue;
+				threadType = "issue";
+			} else if ("pull_request" in payload && payload.pull_request) {
+				contentHandler = new ContentLabelHandler(config, actionConfig, "pr");
+				threadData = payload.pull_request;
+				threadType = "pr";
+			} else if ("discussion" in payload && payload.discussion) {
+				contentHandler = new ContentLabelHandler(config, actionConfig, "discussion");
+				threadData = payload.discussion;
+				threadType = "discussion";
+			} else {
+				// This should not be reached since we checked hasThreadData above
 				return;
 			}
 

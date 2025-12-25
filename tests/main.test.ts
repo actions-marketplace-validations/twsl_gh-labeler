@@ -38,8 +38,9 @@ const validation = await import("./fixtures/validation");
 const { sampleConfig, configWithContentRules } = await import("./fixtures/config");
 const { createIssuePayload, createPullRequestPayload, createDiscussionPayload } = await import("./fixtures/payloads");
 const { setupDefaultMocks, resetMocks } = await import("./fixtures/testHelpers");
-const { createComplexIssuePayload, createComplexPRPayload, createComplexDiscussionPayload } =
-	await import("./fixtures/complexPayloads");
+const { createComplexIssuePayload, createComplexPRPayload, createComplexDiscussionPayload } = await import(
+	"./fixtures/complexPayloads"
+);
 const { configWithSpecialCharacters, largeConfig, configWithEmptyActions, configWithComplexActions } = await import(
 	"./fixtures/configScenarios"
 );
@@ -157,7 +158,7 @@ describe("main.ts", () => {
 					},
 					value: undefined,
 				};
-					validation.default.validate.mockReturnValueOnce(complexError as any);
+				validation.default.validate.mockReturnValueOnce(complexError as any);
 				await run();
 
 				// Assert
@@ -736,7 +737,10 @@ describe("main.ts", () => {
 				await run();
 
 				// Assert
-				expect(handlers.IssueHandler).toHaveBeenCalledWith(configWithSpecialCharacters, expect.objectContaining({ "github-token": "test-token" }));
+				expect(handlers.IssueHandler).toHaveBeenCalledWith(
+					configWithSpecialCharacters,
+					expect.objectContaining({ "github-token": "test-token" }),
+				);
 				expect(handlers.mockIssueHandlerInstance.performActions).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
 			});
 
@@ -754,7 +758,10 @@ describe("main.ts", () => {
 				await run();
 
 				// Assert
-				expect(handlers.IssueHandler).toHaveBeenCalledWith(largeConfig, expect.objectContaining({ "github-token": "test-token" }));
+				expect(handlers.IssueHandler).toHaveBeenCalledWith(
+					largeConfig,
+					expect.objectContaining({ "github-token": "test-token" }),
+				);
 				expect(handlers.mockIssueHandlerInstance.performActions).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
 			});
 
@@ -772,7 +779,10 @@ describe("main.ts", () => {
 				await run();
 
 				// Assert
-				expect(handlers.IssueHandler).toHaveBeenCalledWith(configWithEmptyActions, expect.objectContaining({ "github-token": "test-token" }));
+				expect(handlers.IssueHandler).toHaveBeenCalledWith(
+					configWithEmptyActions,
+					expect.objectContaining({ "github-token": "test-token" }),
+				);
 				expect(handlers.mockIssueHandlerInstance.performActions).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
 			});
 
@@ -790,7 +800,10 @@ describe("main.ts", () => {
 				await run();
 
 				// Assert
-				expect(handlers.IssueHandler).toHaveBeenCalledWith(configWithComplexActions, expect.objectContaining({ "github-token": "test-token" }));
+				expect(handlers.IssueHandler).toHaveBeenCalledWith(
+					configWithComplexActions,
+					expect.objectContaining({ "github-token": "test-token" }),
+				);
 				expect(handlers.mockIssueHandlerInstance.performActions).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
 			});
 		});
@@ -1104,7 +1117,7 @@ describe("main.ts", () => {
 				fs.existsSync.mockReturnValue(true);
 				fs.readFileSync.mockReturnValue(JSON.stringify(sampleConfig));
 				(yaml.parse as jest.Mock).mockReturnValue(sampleConfig);
-				
+
 				// Reset handler mocks to defaults using mockImplementation
 				handlers.ContentLabelHandler.mockImplementation(() => handlers.mockContentLabelHandlerInstance);
 				handlers.IssueHandler.mockImplementation(() => handlers.mockIssueHandlerInstance);
@@ -1284,7 +1297,7 @@ describe("main.ts", () => {
 			it("should handle large config loading performance", async () => {
 				// Arrange
 				fs.readFileSync.mockReturnValue(JSON.stringify(largeConfig));
-			(yaml.parse as jest.Mock).mockReturnValue(largeConfig);
+				(yaml.parse as jest.Mock).mockReturnValue(largeConfig);
 
 				const startTime = Date.now();
 
