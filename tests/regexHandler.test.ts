@@ -1,11 +1,14 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
-import { RegexHandler } from "@/handlers/regexHandler";
-import type Config from "@/models/config";
-import type GHActionConfig from "@/models/ghActionConfig";
 
-// Mock dependencies
-jest.mock("@actions/core");
-jest.mock("@actions/github", () => ({
+// Mock dependencies BEFORE importing
+jest.unstable_mockModule("@actions/core", () => ({
+	debug: jest.fn(),
+	info: jest.fn(),
+	warning: jest.fn(),
+	setFailed: jest.fn(),
+}));
+
+jest.unstable_mockModule("@actions/github", () => ({
 	getOctokit: jest.fn(() => ({
 		rest: {
 			issues: {
@@ -19,11 +22,17 @@ jest.mock("@actions/github", () => ({
 			owner: "test-owner",
 			repo: "test-repo",
 		},
+		payload: {},
 	},
 }));
 
+// Now import after mocking
+const { RegexHandler } = await import("@/handlers/regexHandler");
+import type Config from "@/models/config";
+import type GHActionConfig from "@/models/ghActionConfig";
+
 describe("RegexHandler", () => {
-	let regexHandler: RegexHandler;
+	let regexHandler: InstanceType<typeof RegexHandler>;
 	let mockConfig: Config;
 	let mockActionConfig: GHActionConfig;
 
@@ -38,9 +47,6 @@ describe("RegexHandler", () => {
 				"\\bfeature\\b": {
 					labels: {
 						add: ["enhancement"],
-					},
-					issues: {
-						comment: ["This looks like a feature request!"],
 					},
 				},
 			},

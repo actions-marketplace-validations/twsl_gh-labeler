@@ -7,12 +7,8 @@ import type {
 } from "@octokit/webhooks-types";
 import type Config from "@/models/config";
 import type GHActionConfig from "@/models/ghActionConfig";
-import type Issue from "@/models/config/issues";
 import type Actions from "@/models/config/actions";
 import type { ThreadType } from "@/types/common";
-import { parse } from "yaml";
-import _ from "lodash";
-import actionSchema from "@/schemas/action";
 
 export interface BaseHandler {
 	performActions(
@@ -71,10 +67,10 @@ export abstract class AbstractHandler implements BaseHandler {
 		// Determine if we're adding or removing a label
 		const isRemoval = labelName.startsWith("-");
 		const cleanLabel = isRemoval ? labelName.substring(1) : labelName;
-		
+
 		// Get the appropriate label config
 		let labelConfig: Actions | undefined;
-		
+
 		if (isRemoval && labels.remove) {
 			// For label removal, check labels.remove
 			if (typeof labels.remove === "object" && !Array.isArray(labels.remove)) {
@@ -86,7 +82,7 @@ export abstract class AbstractHandler implements BaseHandler {
 				labelConfig = labels.add[cleanLabel];
 			}
 		}
-		
+
 		// If no specific config found, check default
 		if (!labelConfig && labels.default) {
 			labelConfig = labels.default[cleanLabel];
@@ -100,7 +96,7 @@ export abstract class AbstractHandler implements BaseHandler {
 		// Thread-specific actions should override root-level ones
 		const mergedConfig = { ...labelConfig };
 		const threadActions = labelConfig[threadKey];
-		
+
 		if (threadActions) {
 			// Deep merge thread-specific actions
 			Object.assign(mergedConfig, threadActions);
@@ -114,7 +110,7 @@ export abstract class AbstractHandler implements BaseHandler {
 	}
 
 	protected async ensureUnlock(
-		issue: Issue,
+		issue: { owner: string; repo: string; issue_number: number },
 		lock: { active: boolean; reason?: string | null },
 		action: () => Promise<void>,
 	): Promise<void> {
@@ -140,7 +136,11 @@ export abstract class AbstractHandler implements BaseHandler {
 			const lockParams = lock.reason
 				? {
 						...issue,
-						lock_reason: lock.reason,
+						lock_reason: lock.reason as
+							| "resolved"
+							| "off-topic"
+							| "too heated"
+							| "spam",
 						headers: {
 							Accept: "application/vnd.github.sailor-v-preview+json",
 						},

@@ -4,7 +4,6 @@ import type {
 	PullRequestEvent,
 	DiscussionEvent,
 } from "@octokit/webhooks-types";
-import _ from "lodash";
 import { AbstractHandler } from "@/handlers/baseHandler";
 import { IssueHandler } from "@/handlers/issueHandler";
 import { PullRequestHandler } from "@/handlers/pullRequestHandler";

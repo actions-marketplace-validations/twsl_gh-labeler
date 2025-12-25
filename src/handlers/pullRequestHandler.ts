@@ -92,7 +92,9 @@ export class PullRequestHandler extends AbstractHandler {
 
 		// Handle reviewers - add
 		if (prActions.reviewers?.add && prActions.reviewers.add.length > 0) {
-			core.debug(`Adding reviewers to PR: ${prActions.reviewers.add.join(", ")}`);
+			core.debug(
+				`Adding reviewers to PR: ${prActions.reviewers.add.join(", ")}`,
+			);
 			const author = threadData.user?.login || "";
 			const reviewers = _.without(prActions.reviewers.add, author);
 
@@ -111,7 +113,9 @@ export class PullRequestHandler extends AbstractHandler {
 
 		// Handle assignees - add
 		if (prActions.assignees?.add && prActions.assignees.add.length > 0) {
-			core.debug(`Adding assignees to PR: ${prActions.assignees.add.join(", ")}`);
+			core.debug(
+				`Adding assignees to PR: ${prActions.assignees.add.join(", ")}`,
+			);
 			await this.client.rest.issues.addAssignees({
 				...issue,
 				assignees: prActions.assignees.add,

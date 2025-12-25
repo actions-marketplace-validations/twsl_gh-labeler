@@ -4,7 +4,6 @@ import type {
 	PullRequestEvent,
 	DiscussionEvent,
 } from "@octokit/webhooks-types";
-import _ from "lodash";
 import { AbstractHandler } from "./baseHandler";
 import type { ThreadType } from "@/types/common";
 
@@ -66,8 +65,15 @@ export class ContentLabelHandler extends AbstractHandler {
 
 		if (labelsToAdd.length > 0) {
 			core.info(`Adding content-based labels: ${labelsToAdd.join(", ")}`);
+
+			const issueParams = {
+				owner: this.owner,
+				repo: this.repo,
+				issue_number: threadData.number,
+			};
+
 			await this.client.rest.issues.addLabels({
-				...issue,
+				...issueParams,
 				labels: labelsToAdd,
 			});
 		}
@@ -109,7 +115,7 @@ export class ContentLabelHandler extends AbstractHandler {
 	// This method is required by the abstract class but not used
 	// for content scanning operations
 	async performActions(
-		payload: any,
+		_payload: any,
 		threadData:
 			| IssuesEvent["issue"]
 			| PullRequestEvent["pull_request"]

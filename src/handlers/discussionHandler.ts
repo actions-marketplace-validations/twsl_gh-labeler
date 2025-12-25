@@ -1,6 +1,5 @@
 import * as core from "@actions/core";
 import type { DiscussionEvent } from "@octokit/webhooks-types";
-import _ from "lodash";
 import { AbstractHandler } from "./baseHandler";
 import type { ThreadType } from "@/types/common";
 import type Discussions from "@/models/config/discussions";
@@ -121,7 +120,9 @@ export class DiscussionHandler extends AbstractHandler {
 				: Object.keys(discussionActions.labels.remove);
 
 			if (labelsToRemove.length > 0) {
-				core.debug(`Removing labels from discussion: ${labelsToRemove.join(", ")}`);
+				core.debug(
+					`Removing labels from discussion: ${labelsToRemove.join(", ")}`,
+				);
 				try {
 					// First get label IDs
 					const labelQuery = `
@@ -173,7 +174,9 @@ export class DiscussionHandler extends AbstractHandler {
 
 		// Handle category change
 		if (discussionActions.category) {
-			core.debug(`Changing discussion category to: ${discussionActions.category}`);
+			core.debug(
+				`Changing discussion category to: ${discussionActions.category}`,
+			);
 			try {
 				// First get category ID
 				const categoryQuery = `
@@ -194,9 +197,10 @@ export class DiscussionHandler extends AbstractHandler {
 					name: this.repo,
 				});
 
-				const category = categoryData.repository.discussionCategories.nodes.find(
-					(c: any) => c.name === discussionActions.category,
-				);
+				const category =
+					categoryData.repository.discussionCategories.nodes.find(
+						(c: any) => c.name === discussionActions.category,
+					);
 
 				if (category) {
 					const mutation = `

@@ -193,7 +193,7 @@ describe("Config Inheritance", () => {
 			const config: Config = {
 				caseSensitive: true,
 				regex: {
-					"URGENT": {
+					URGENT: {
 						labels: {
 							add: ["urgent"],
 						},

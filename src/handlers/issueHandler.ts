@@ -171,7 +171,10 @@ export class IssueHandler extends AbstractHandler {
 		}
 
 		// Handle milestones - add
-		if (issueActions.milestones?.add && issueActions.milestones.add.length > 0) {
+		if (
+			issueActions.milestones?.add &&
+			issueActions.milestones.add.length > 0
+		) {
 			core.debug("Adding milestone to issue");
 			// GitHub API only supports one milestone per issue
 			const milestoneTitle = issueActions.milestones.add[0];
