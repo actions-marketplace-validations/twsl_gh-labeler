@@ -1,25 +1,16 @@
-import {
-	jest,
-	describe,
-	beforeEach,
-	it,
-	expect,
-	afterEach,
-} from "@jest/globals";
+import { jest, describe, beforeEach, it, expect, afterEach } from "@jest/globals";
 
 // Mock dependencies
 jest.unstable_mockModule("@actions/core", () => import("./fixtures/core"));
 jest.unstable_mockModule("@actions/github", () => import("./fixtures/github"));
 
 const { IssueHandler } = await import("../src/handlers/issueHandler");
-const { PullRequestHandler } = await import(
-	"../src/handlers/pullRequestHandler"
-);
+const { PullRequestHandler } = await import("../src/handlers/pullRequestHandler");
 const { DiscussionHandler } = await import("../src/handlers/discussionHandler");
 const core = await import("./fixtures/core");
 const githubModule = await import("./fixtures/github");
-import type Config from "@/models/config";
-import type GHActionConfig from "@/models/ghActionConfig";
+import type Config from "@/models/internal/config";
+import type GHActionConfig from "@/models/internal/ghActionConfig";
 import type { IssuesEvent, PullRequestEvent } from "@octokit/webhooks-types";
 
 describe("Handler Actions with Config Inheritance", () => {
@@ -405,9 +396,7 @@ describe("Handler Actions with Config Inheritance", () => {
 
 			await handler.performActions(payload, threadData);
 
-			expect(
-				mockOctokit.rest.pulls.removeRequestedReviewers,
-			).toHaveBeenCalledWith({
+			expect(mockOctokit.rest.pulls.removeRequestedReviewers).toHaveBeenCalledWith({
 				owner: "test-owner",
 				repo: "test-repo",
 				pull_number: 1,

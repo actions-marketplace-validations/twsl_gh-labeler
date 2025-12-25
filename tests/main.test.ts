@@ -1,11 +1,4 @@
-import {
-	jest,
-	describe,
-	beforeEach,
-	afterEach,
-	it,
-	expect,
-} from "@jest/globals";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 // Mock all external dependencies BEFORE importing the main module
 jest.unstable_mockModule("@actions/core", () => import("./fixtures/core"));
@@ -30,10 +23,7 @@ jest.unstable_mockModule("../src/handlers/contentLabelHandler", async () => {
 	const handlers = await import("./fixtures/handlers");
 	return { ContentLabelHandler: handlers.ContentLabelHandler };
 });
-jest.unstable_mockModule(
-	"../src/schemas/ghActionConfig",
-	() => import("./fixtures/validation"),
-);
+jest.unstable_mockModule("../src/schemas/ghActionConfig", () => import("./fixtures/validation"));
 
 // Import the main module AFTER setting up mocks
 const { run } = await import("../src/main");
@@ -45,33 +35,19 @@ const fs = await import("./fixtures/fs");
 const yaml = await import("yaml");
 const handlers = await import("./fixtures/handlers");
 const validation = await import("./fixtures/validation");
-const { sampleConfig, configWithContentRules } = await import(
-	"./fixtures/config"
+const { sampleConfig, configWithContentRules } = await import("./fixtures/config");
+const { createIssuePayload, createPullRequestPayload, createDiscussionPayload } = await import("./fixtures/payloads");
+const { setupDefaultMocks, resetMocks } = await import("./fixtures/testHelpers");
+const { createComplexIssuePayload, createComplexPRPayload, createComplexDiscussionPayload, createMalformedPayload } =
+	await import("./fixtures/complexPayloads");
+const { configWithSpecialCharacters, largeConfig, configWithEmptyActions, configWithComplexActions } = await import(
+	"./fixtures/configScenarios"
 );
-const {
-	createIssuePayload,
-	createPullRequestPayload,
-	createDiscussionPayload,
-} = await import("./fixtures/payloads");
-const { setupDefaultMocks, resetMocks } = await import(
-	"./fixtures/testHelpers"
-);
-const {
-	createComplexIssuePayload,
-	createComplexPRPayload,
-	createComplexDiscussionPayload,
-	createMalformedPayload,
-} = await import("./fixtures/complexPayloads");
-const {
-	configWithSpecialCharacters,
-	largeConfig,
-	configWithEmptyActions,
-	configWithComplexActions,
-} = await import("./fixtures/configScenarios");
 const { testInputConfigs } = await import("./fixtures/testHelpers");
 
 describe("main.ts", () => {
 	beforeEach(async () => {
+		jest.clearAllMocks();
 		await setupDefaultMocks();
 	});
 
@@ -96,9 +72,7 @@ describe("main.ts", () => {
 					}
 				});
 
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 				github.context.payload = {};
 
 				// Act
@@ -130,9 +104,7 @@ describe("main.ts", () => {
 					}
 				});
 
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 				github.context.payload = {};
 
 				// Act
@@ -152,9 +124,7 @@ describe("main.ts", () => {
 			it("should handle validation errors", async () => {
 				// Arrange
 				core.getInput.mockReturnValue("");
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationError,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationError);
 
 				// Act
 				await run();
@@ -204,9 +174,7 @@ describe("main.ts", () => {
 
 		describe("config loading", () => {
 			beforeEach(() => {
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 			});
 
 			it("should load configuration file successfully", async () => {
@@ -220,10 +188,7 @@ describe("main.ts", () => {
 
 				// Assert
 				expect(fs.existsSync).toHaveBeenCalledWith("./example/config.yaml");
-				expect(fs.readFileSync).toHaveBeenCalledWith(
-					"./example/config.yaml",
-					"utf8",
-				);
+				expect(fs.readFileSync).toHaveBeenCalledWith("./example/config.yaml", "utf8");
 			});
 
 			it("should handle missing config file", async () => {
@@ -235,9 +200,7 @@ describe("main.ts", () => {
 				await run();
 
 				// Assert
-				expect(core.setFailed).toHaveBeenCalledWith(
-					"Configuration file not found at path: ./example/config.yaml",
-				);
+				expect(core.setFailed).toHaveBeenCalledWith("Configuration file not found at path: ./example/config.yaml");
 			});
 
 			it("should handle config file read errors", async () => {
@@ -261,6 +224,9 @@ describe("main.ts", () => {
 				// Arrange
 				fs.existsSync.mockReturnValue(true);
 				fs.readFileSync.mockReturnValue("invalid json content");
+				(yaml.parse as jest.Mock).mockImplementation(() => {
+					throw new Error("Invalid YAML format");
+				});
 				github.context.payload = {};
 
 				// Act
@@ -268,18 +234,14 @@ describe("main.ts", () => {
 
 				// Assert
 				expect(core.setFailed).toHaveBeenCalledWith(
-					expect.stringContaining(
-						"Failed to load or parse configuration file at ./example/config.yaml:",
-					),
+					expect.stringContaining("Failed to load or parse configuration file at ./example/config.yaml:"),
 				);
 			});
 		});
 
 		describe("content scanning workflow", () => {
 			beforeEach(() => {
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 				fs.existsSync.mockReturnValue(true);
 				fs.readFileSync.mockReturnValue(JSON.stringify(configWithContentRules));
 				(yaml.parse as jest.Mock).mockReturnValue(configWithContentRules);
@@ -299,9 +261,7 @@ describe("main.ts", () => {
 				});
 				const issuePayload = createIssuePayload("opened");
 				github.context.payload = issuePayload;
-				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
-				);
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("issue");
 
 				// Act
 				await run();
@@ -309,24 +269,20 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					configWithContentRules,
-					expect.objectContaining({ "github-token": "" }),
+					expect.objectContaining({ "github-token": "test-token" }),
 					"issue",
 				);
-				expect(core.info).toHaveBeenCalledWith(
-					"Scanning content of issue #123",
+				expect(core.info).toHaveBeenCalledWith("Scanning content of issue #123");
+				expect(handlers.mockContentLabelHandlerInstance.performContentScanning).toHaveBeenCalledWith(
+					issuePayload.issue,
 				);
-				expect(
-					handlers.mockContentLabelHandlerInstance.performContentScanning,
-				).toHaveBeenCalledWith(issuePayload.issue);
 			});
 
 			it("should handle issue edited event", async () => {
 				// Arrange
 				const issuePayload = createIssuePayload("edited");
 				github.context.payload = issuePayload;
-				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
-				);
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("issue");
 
 				// Act
 				await run();
@@ -334,24 +290,20 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					configWithContentRules,
-					expect.objectContaining({ "github-token": "" }),
+					expect.objectContaining({ "github-token": "test-token" }),
 					"issue",
 				);
-				expect(core.info).toHaveBeenCalledWith(
-					"Scanning content of issue #123",
+				expect(core.info).toHaveBeenCalledWith("Scanning content of issue #123");
+				expect(handlers.mockContentLabelHandlerInstance.performContentScanning).toHaveBeenCalledWith(
+					issuePayload.issue,
 				);
-				expect(
-					handlers.mockContentLabelHandlerInstance.performContentScanning,
-				).toHaveBeenCalledWith(issuePayload.issue);
 			});
 
 			it("should handle pull request opened event", async () => {
 				// Arrange
 				const prPayload = createPullRequestPayload("opened");
 				github.context.payload = prPayload;
-				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue(
-					"pull_request",
-				);
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("pull_request");
 
 				// Act
 				await run();
@@ -359,24 +311,20 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					configWithContentRules,
-					expect.objectContaining({ "github-token": "" }),
+					expect.objectContaining({ "github-token": "test-token" }),
 					"pr",
 				);
-				expect(core.info).toHaveBeenCalledWith(
-					"Scanning content of pull_request #456",
+				expect(core.info).toHaveBeenCalledWith("Scanning content of pull_request #456");
+				expect(handlers.mockContentLabelHandlerInstance.performContentScanning).toHaveBeenCalledWith(
+					prPayload.pull_request,
 				);
-				expect(
-					handlers.mockContentLabelHandlerInstance.performContentScanning,
-				).toHaveBeenCalledWith(prPayload.pull_request);
 			});
 
 			it("should handle pull request edited event", async () => {
 				// Arrange
 				const prPayload = createPullRequestPayload("edited");
 				github.context.payload = prPayload;
-				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue(
-					"pull_request",
-				);
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("pull_request");
 
 				// Act
 				await run();
@@ -384,21 +332,19 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					configWithContentRules,
-					expect.objectContaining({ "github-token": "" }),
+					expect.objectContaining({ "github-token": "test-token" }),
 					"pr",
 				);
-				expect(
-					handlers.mockContentLabelHandlerInstance.performContentScanning,
-				).toHaveBeenCalledWith(prPayload.pull_request);
+				expect(handlers.mockContentLabelHandlerInstance.performContentScanning).toHaveBeenCalledWith(
+					prPayload.pull_request,
+				);
 			});
 
 			it("should handle discussion opened event", async () => {
 				// Arrange
 				const discussionPayload = createDiscussionPayload("opened");
 				github.context.payload = discussionPayload;
-				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue(
-					"discussion",
-				);
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("discussion");
 
 				// Act
 				await run();
@@ -406,15 +352,13 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					configWithContentRules,
-					expect.objectContaining({ "github-token": "" }),
+					expect.objectContaining({ "github-token": "test-token" }),
 					"discussion",
 				);
-				expect(core.info).toHaveBeenCalledWith(
-					"Scanning content of discussion #789",
+				expect(core.info).toHaveBeenCalledWith("Scanning content of discussion #789");
+				expect(handlers.mockContentLabelHandlerInstance.performContentScanning).toHaveBeenCalledWith(
+					discussionPayload.discussion,
 				);
-				expect(
-					handlers.mockContentLabelHandlerInstance.performContentScanning,
-				).toHaveBeenCalledWith(discussionPayload.discussion);
 			});
 
 			it("should handle missing thread data in content scanning", async () => {
@@ -428,18 +372,14 @@ describe("main.ts", () => {
 				await run();
 
 				// Assert
-				expect(core.info).toHaveBeenCalledWith(
-					"No issue, pull request or discussion found in payload",
-				);
+				expect(core.info).toHaveBeenCalledWith("No issue, pull request or discussion found in payload");
 				expect(handlers.ContentLabelHandler).not.toHaveBeenCalled();
 			});
 		});
 
 		describe("label-based action workflow", () => {
 			beforeEach(() => {
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 				fs.existsSync.mockReturnValue(true);
 				fs.readFileSync.mockReturnValue(JSON.stringify(sampleConfig));
 			});
@@ -450,19 +390,18 @@ describe("main.ts", () => {
 					name: "bug",
 				});
 				github.context.payload = issuePayload;
-				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
-				);
+				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue("issue");
 
 				// Act
 				await run();
 
 				// Assert
-				expect(handlers.IssueHandler).toHaveBeenCalledWith(sampleConfig);
+				expect(handlers.IssueHandler).toHaveBeenCalledWith(
+					sampleConfig,
+					expect.objectContaining({ "github-token": "test-token" }),
+				);
 				expect(core.info).toHaveBeenCalledWith("Processing issue #123");
-				expect(
-					handlers.mockIssueHandlerInstance.performActions,
-				).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
+				expect(handlers.mockIssueHandlerInstance.performActions).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
 			});
 
 			it("should handle issue unlabeled event", async () => {
@@ -471,18 +410,17 @@ describe("main.ts", () => {
 					name: "bug",
 				});
 				github.context.payload = issuePayload;
-				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
-				);
+				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue("issue");
 
 				// Act
 				await run();
 
 				// Assert
-				expect(handlers.IssueHandler).toHaveBeenCalledWith(sampleConfig);
-				expect(
-					handlers.mockIssueHandlerInstance.performActions,
-				).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
+				expect(handlers.IssueHandler).toHaveBeenCalledWith(
+					sampleConfig,
+					expect.objectContaining({ "github-token": "test-token" }),
+				);
+				expect(handlers.mockIssueHandlerInstance.performActions).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
 			});
 
 			it("should handle pull request labeled event", async () => {
@@ -491,19 +429,21 @@ describe("main.ts", () => {
 					name: "enhancement",
 				});
 				github.context.payload = prPayload;
-				handlers.mockPullRequestHandlerInstance.getThreadType.mockReturnValue(
-					"pull_request",
-				);
+				handlers.mockPullRequestHandlerInstance.getThreadType.mockReturnValue("pull_request");
 
 				// Act
 				await run();
 
 				// Assert
-				expect(handlers.PullRequestHandler).toHaveBeenCalledWith(sampleConfig);
-				expect(core.info).toHaveBeenCalledWith("Processing pull_request #456");
-				expect(
-					handlers.mockPullRequestHandlerInstance.performActions,
-				).toHaveBeenCalledWith(prPayload, prPayload.pull_request);
+				expect(handlers.PullRequestHandler).toHaveBeenCalledWith(
+					sampleConfig,
+					expect.objectContaining({ "github-token": "test-token" }),
+				);
+				expect(core.info).toHaveBeenCalledWith("Processing pull request #456");
+				expect(handlers.mockPullRequestHandlerInstance.performActions).toHaveBeenCalledWith(
+					prPayload,
+					prPayload.pull_request,
+				);
 			});
 
 			it("should handle pull request unlabeled event", async () => {
@@ -512,43 +452,43 @@ describe("main.ts", () => {
 					name: "enhancement",
 				});
 				github.context.payload = prPayload;
-				handlers.mockPullRequestHandlerInstance.getThreadType.mockReturnValue(
-					"pull_request",
-				);
+				handlers.mockPullRequestHandlerInstance.getThreadType.mockReturnValue("pull_request");
 
 				// Act
 				await run();
 
 				// Assert
-				expect(handlers.PullRequestHandler).toHaveBeenCalledWith(sampleConfig);
-				expect(
-					handlers.mockPullRequestHandlerInstance.performActions,
-				).toHaveBeenCalledWith(prPayload, prPayload.pull_request);
+				expect(handlers.PullRequestHandler).toHaveBeenCalledWith(
+					sampleConfig,
+					expect.objectContaining({ "github-token": "test-token" }),
+				);
+				expect(handlers.mockPullRequestHandlerInstance.performActions).toHaveBeenCalledWith(
+					prPayload,
+					prPayload.pull_request,
+				);
 			});
 
 			it("should handle discussion labeled event", async () => {
 				// Arrange
-				const discussionPayload = createDiscussionPayload(
-					"labeled",
-					undefined,
-					{
-						name: "question",
-					},
-				);
+				const discussionPayload = createDiscussionPayload("labeled", undefined, {
+					name: "question",
+				});
 				github.context.payload = discussionPayload;
-				handlers.mockDiscussionHandlerInstance.getThreadType.mockReturnValue(
-					"discussion",
-				);
+				handlers.mockDiscussionHandlerInstance.getThreadType.mockReturnValue("discussion");
 
 				// Act
 				await run();
 
 				// Assert
-				expect(handlers.DiscussionHandler).toHaveBeenCalledWith(sampleConfig);
+				expect(handlers.DiscussionHandler).toHaveBeenCalledWith(
+					sampleConfig,
+					expect.objectContaining({ "github-token": "test-token" }),
+				);
 				expect(core.info).toHaveBeenCalledWith("Processing discussion #789");
-				expect(
-					handlers.mockDiscussionHandlerInstance.performActions,
-				).toHaveBeenCalledWith(discussionPayload, discussionPayload.discussion);
+				expect(handlers.mockDiscussionHandlerInstance.performActions).toHaveBeenCalledWith(
+					discussionPayload,
+					discussionPayload.discussion,
+				);
 			});
 
 			it("should handle missing thread data in label-based actions", async () => {
@@ -563,9 +503,7 @@ describe("main.ts", () => {
 				await run();
 
 				// Assert
-				expect(core.info).toHaveBeenCalledWith(
-					"No issue, pull request or discussion found in payload",
-				);
+				expect(core.info).toHaveBeenCalledWith("No issue, pull request or discussion found in payload");
 				expect(handlers.IssueHandler).not.toHaveBeenCalled();
 				expect(handlers.PullRequestHandler).not.toHaveBeenCalled();
 				expect(handlers.DiscussionHandler).not.toHaveBeenCalled();
@@ -574,11 +512,10 @@ describe("main.ts", () => {
 
 		describe("workflow priority and exclusion", () => {
 			beforeEach(() => {
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 				fs.existsSync.mockReturnValue(true);
 				fs.readFileSync.mockReturnValue(JSON.stringify(configWithContentRules));
+				(yaml.parse as jest.Mock).mockReturnValue(configWithContentRules);
 			});
 
 			it("should prioritize content scanning over label-based actions", async () => {
@@ -589,9 +526,7 @@ describe("main.ts", () => {
 				// Add label to make it eligible for label-based actions too
 				issuePayload.label = { name: "bug" };
 				github.context.payload = issuePayload;
-				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
-				);
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("issue");
 
 				// Act
 				await run();
@@ -599,14 +534,14 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					configWithContentRules,
-					expect.objectContaining({ "github-token": "" }),
+					expect.objectContaining({ "github-token": "test-token" }),
 					"issue",
 				);
-				expect(
-					handlers.mockContentLabelHandlerInstance.performContentScanning,
-				).toHaveBeenCalledWith(issuePayload.issue);
-				// Should not call label-based handlers
-				expect(handlers.IssueHandler).not.toHaveBeenCalled();
+				expect(handlers.mockContentLabelHandlerInstance.performContentScanning).toHaveBeenCalledWith(
+					issuePayload.issue,
+				);
+				// Should not call label-based handler methods (IssueHandler is created by RegexHandler so constructor will be called)
+				expect(handlers.mockIssueHandlerInstance.performActions).not.toHaveBeenCalled();
 			});
 
 			it("should skip both workflows for unsupported actions", async () => {
@@ -627,9 +562,7 @@ describe("main.ts", () => {
 
 		describe("error handling", () => {
 			beforeEach(() => {
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 				fs.existsSync.mockReturnValue(true);
 				fs.readFileSync.mockReturnValue(JSON.stringify(sampleConfig));
 			});
@@ -638,10 +571,9 @@ describe("main.ts", () => {
 				// Arrange
 				const issuePayload = createIssuePayload("opened");
 				github.context.payload = issuePayload;
-				(
-					handlers.mockContentLabelHandlerInstance
-						.performContentScanning as jest.MockedFunction<any>
-				).mockRejectedValue(new Error("Content scanning failed"));
+				(handlers.mockContentLabelHandlerInstance.performContentScanning as jest.MockedFunction<any>).mockRejectedValue(
+					new Error("Content scanning failed"),
+				);
 
 				// Act
 				await run();
@@ -656,10 +588,9 @@ describe("main.ts", () => {
 					name: "bug",
 				});
 				github.context.payload = issuePayload;
-				(
-					handlers.mockIssueHandlerInstance
-						.performActions as jest.MockedFunction<any>
-				).mockRejectedValue(new Error("Action execution failed"));
+				(handlers.mockIssueHandlerInstance.performActions as jest.MockedFunction<any>).mockRejectedValue(
+					new Error("Action execution failed"),
+				);
 
 				// Act
 				await run();
@@ -680,34 +611,33 @@ describe("main.ts", () => {
 				await run();
 
 				// Assert
-				expect(core.setFailed).toHaveBeenCalledWith(
-					"Handler instantiation failed",
-				);
+				expect(core.setFailed).toHaveBeenCalledWith("Handler instantiation failed");
 			});
 
 			it("should handle non-Error exceptions", async () => {
 				// Arrange
+				fs.existsSync.mockReturnValue(true);
+				fs.readFileSync.mockReturnValue(JSON.stringify(sampleConfig));
+				(yaml.parse as jest.Mock).mockReturnValue(sampleConfig);
 				const issuePayload = createIssuePayload("opened");
 				github.context.payload = issuePayload;
-				(
-					handlers.mockContentLabelHandlerInstance
-						.performContentScanning as jest.MockedFunction<any>
-				).mockRejectedValue("String error");
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("issue");
+				(handlers.mockContentLabelHandlerInstance.performContentScanning as jest.MockedFunction<any>).mockRejectedValue(
+					"String error",
+				);
 
 				// Act
 				await run();
 
 				// Assert
-				// Should not call setFailed for non-Error exceptions
-				expect(core.setFailed).not.toHaveBeenCalled();
+				// Should convert non-Error exceptions to strings and call setFailed
+				expect(core.setFailed).toHaveBeenCalledWith("String error");
 			});
 		});
 
 		describe("edge cases", () => {
 			beforeEach(() => {
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 				fs.existsSync.mockReturnValue(true);
 				fs.readFileSync.mockReturnValue(JSON.stringify(sampleConfig));
 			});
@@ -737,9 +667,7 @@ describe("main.ts", () => {
 				await run();
 
 				// Assert
-				expect(core.info).toHaveBeenCalledWith(
-					"No issue, pull request or discussion found in payload",
-				);
+				expect(core.info).toHaveBeenCalledWith("No issue, pull request or discussion found in payload");
 			});
 
 			it("should handle label events without label data", async () => {
@@ -771,9 +699,7 @@ describe("main.ts", () => {
 					}
 				});
 
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 				github.context.payload = {};
 
 				// Act
@@ -793,123 +719,97 @@ describe("main.ts", () => {
 
 		describe("advanced configuration scenarios", () => {
 			beforeEach(() => {
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 				fs.existsSync.mockReturnValue(true);
+				(yaml.parse as jest.Mock).mockReturnValue(sampleConfig);
 			});
 
 			it("should handle config with special characters in labels", async () => {
 				// Arrange
-				fs.readFileSync.mockReturnValue(
-					JSON.stringify(configWithSpecialCharacters),
-				);
+				fs.readFileSync.mockReturnValue(JSON.stringify(configWithSpecialCharacters));
+				(yaml.parse as jest.Mock).mockReturnValue(configWithSpecialCharacters);
 				const issuePayload = createIssuePayload("labeled", undefined, {
 					name: "🐛-bug",
 				});
 				github.context.payload = issuePayload;
-				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
-				);
+				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue("issue");
 
 				// Act
 				await run();
 
 				// Assert
-				expect(handlers.IssueHandler).toHaveBeenCalledWith(
-					configWithSpecialCharacters,
-				);
-				expect(
-					handlers.mockIssueHandlerInstance.performActions,
-				).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
+				expect(handlers.IssueHandler).toHaveBeenCalledWith(configWithSpecialCharacters, expect.objectContaining({ "github-token": "test-token" }));
+				expect(handlers.mockIssueHandlerInstance.performActions).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
 			});
 
 			it("should handle large configuration files efficiently", async () => {
 				// Arrange
 				fs.readFileSync.mockReturnValue(JSON.stringify(largeConfig));
+				(yaml.parse as jest.Mock).mockReturnValue(largeConfig);
 				const issuePayload = createIssuePayload("labeled", undefined, {
 					name: "label-500",
 				});
 				github.context.payload = issuePayload;
-				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
-				);
+				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue("issue");
 
 				// Act
 				await run();
 
 				// Assert
-				expect(handlers.IssueHandler).toHaveBeenCalledWith(largeConfig);
-				expect(
-					handlers.mockIssueHandlerInstance.performActions,
-				).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
+				expect(handlers.IssueHandler).toHaveBeenCalledWith(largeConfig, expect.objectContaining({ "github-token": "test-token" }));
+				expect(handlers.mockIssueHandlerInstance.performActions).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
 			});
 
 			it("should handle config with empty actions", async () => {
 				// Arrange
 				fs.readFileSync.mockReturnValue(JSON.stringify(configWithEmptyActions));
+				(yaml.parse as jest.Mock).mockReturnValue(configWithEmptyActions);
 				const issuePayload = createIssuePayload("labeled", undefined, {
 					name: "empty-action",
 				});
 				github.context.payload = issuePayload;
-				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
-				);
+				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue("issue");
 
 				// Act
 				await run();
 
 				// Assert
-				expect(handlers.IssueHandler).toHaveBeenCalledWith(
-					configWithEmptyActions,
-				);
-				expect(
-					handlers.mockIssueHandlerInstance.performActions,
-				).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
+				expect(handlers.IssueHandler).toHaveBeenCalledWith(configWithEmptyActions, expect.objectContaining({ "github-token": "test-token" }));
+				expect(handlers.mockIssueHandlerInstance.performActions).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
 			});
 
 			it("should handle config with complex multi-actions", async () => {
 				// Arrange
-				fs.readFileSync.mockReturnValue(
-					JSON.stringify(configWithComplexActions),
-				);
+				fs.readFileSync.mockReturnValue(JSON.stringify(configWithComplexActions));
+				(yaml.parse as jest.Mock).mockReturnValue(configWithComplexActions);
 				const issuePayload = createIssuePayload("labeled", undefined, {
 					name: "multi-action",
 				});
 				github.context.payload = issuePayload;
-				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
-				);
+				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue("issue");
 
 				// Act
 				await run();
 
 				// Assert
-				expect(handlers.IssueHandler).toHaveBeenCalledWith(
-					configWithComplexActions,
-				);
-				expect(
-					handlers.mockIssueHandlerInstance.performActions,
-				).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
+				expect(handlers.IssueHandler).toHaveBeenCalledWith(configWithComplexActions, expect.objectContaining({ "github-token": "test-token" }));
+				expect(handlers.mockIssueHandlerInstance.performActions).toHaveBeenCalledWith(issuePayload, issuePayload.issue);
 			});
 		});
 
 		describe("complex payload scenarios", () => {
 			beforeEach(() => {
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 				fs.existsSync.mockReturnValue(true);
 				fs.readFileSync.mockReturnValue(JSON.stringify(sampleConfig));
+				(yaml.parse as jest.Mock).mockReturnValue(sampleConfig);
 			});
 
 			it("should handle complex issue payloads with multiple labels", async () => {
 				// Arrange
 				const complexIssuePayload = createComplexIssuePayload("opened");
 				github.context.payload = complexIssuePayload;
-				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
-				);
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("issue");
 
 				// Act
 				await run();
@@ -917,24 +817,20 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					sampleConfig,
-					expect.objectContaining({ "github-token": "" }),
+					expect.objectContaining({ "github-token": "test-token" }),
 					"issue",
 				);
-				expect(core.info).toHaveBeenCalledWith(
-					"Scanning content of issue #123",
+				expect(core.info).toHaveBeenCalledWith("Scanning content of issue #123");
+				expect(handlers.mockContentLabelHandlerInstance.performContentScanning).toHaveBeenCalledWith(
+					complexIssuePayload.issue,
 				);
-				expect(
-					handlers.mockContentLabelHandlerInstance.performContentScanning,
-				).toHaveBeenCalledWith(complexIssuePayload.issue);
 			});
 
 			it("should handle complex PR payloads with reviewers and assignees", async () => {
 				// Arrange
 				const complexPRPayload = createComplexPRPayload("opened");
 				github.context.payload = complexPRPayload;
-				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue(
-					"pull_request",
-				);
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("pull_request");
 
 				// Act
 				await run();
@@ -942,25 +838,20 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					sampleConfig,
-					expect.objectContaining({ "github-token": "" }),
+					expect.objectContaining({ "github-token": "test-token" }),
 					"pr",
 				);
-				expect(core.info).toHaveBeenCalledWith(
-					"Scanning content of pull_request #456",
+				expect(core.info).toHaveBeenCalledWith("Scanning content of pull_request #456");
+				expect(handlers.mockContentLabelHandlerInstance.performContentScanning).toHaveBeenCalledWith(
+					complexPRPayload.pull_request,
 				);
-				expect(
-					handlers.mockContentLabelHandlerInstance.performContentScanning,
-				).toHaveBeenCalledWith(complexPRPayload.pull_request);
 			});
 
 			it("should handle complex discussion payloads with categories", async () => {
 				// Arrange
-				const complexDiscussionPayload =
-					createComplexDiscussionPayload("opened");
+				const complexDiscussionPayload = createComplexDiscussionPayload("opened");
 				github.context.payload = complexDiscussionPayload;
-				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue(
-					"discussion",
-				);
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("discussion");
 
 				// Act
 				await run();
@@ -968,15 +859,13 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					sampleConfig,
-					expect.objectContaining({ "github-token": "" }),
+					expect.objectContaining({ "github-token": "test-token" }),
 					"discussion",
 				);
-				expect(core.info).toHaveBeenCalledWith(
-					"Scanning content of discussion #789",
+				expect(core.info).toHaveBeenCalledWith("Scanning content of discussion #789");
+				expect(handlers.mockContentLabelHandlerInstance.performContentScanning).toHaveBeenCalledWith(
+					complexDiscussionPayload.discussion,
 				);
-				expect(
-					handlers.mockContentLabelHandlerInstance.performContentScanning,
-				).toHaveBeenCalledWith(complexDiscussionPayload.discussion);
 			});
 
 			it("should handle complex labeled events with existing labels", async () => {
@@ -990,19 +879,21 @@ describe("main.ts", () => {
 				});
 				complexIssuePayload.label = { name: "critical", color: "ff0000" };
 				github.context.payload = complexIssuePayload;
-				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
-				);
+				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue("issue");
 
 				// Act
 				await run();
 
 				// Assert
-				expect(handlers.IssueHandler).toHaveBeenCalledWith(sampleConfig);
+				expect(handlers.IssueHandler).toHaveBeenCalledWith(
+					sampleConfig,
+					expect.objectContaining({ "github-token": "test-token" }),
+				);
 				expect(core.info).toHaveBeenCalledWith("Processing issue #123");
-				expect(
-					handlers.mockIssueHandlerInstance.performActions,
-				).toHaveBeenCalledWith(complexIssuePayload, complexIssuePayload.issue);
+				expect(handlers.mockIssueHandlerInstance.performActions).toHaveBeenCalledWith(
+					complexIssuePayload,
+					complexIssuePayload.issue,
+				);
 			});
 		});
 
@@ -1120,9 +1011,7 @@ describe("main.ts", () => {
 
 		describe("file system edge cases", () => {
 			beforeEach(() => {
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 			});
 
 			it("should handle file system permission errors", async () => {
@@ -1171,15 +1060,16 @@ describe("main.ts", () => {
 				await run();
 
 				// Assert
-				expect(core.setFailed).toHaveBeenCalledWith(
-					"Configuration file not found at path: /custom/path/config.yaml",
-				);
+				expect(core.setFailed).toHaveBeenCalledWith("Configuration file not found at path: /custom/path/config.yaml");
 			});
 
 			it("should handle empty config file", async () => {
 				// Arrange
 				fs.existsSync.mockReturnValue(true);
 				fs.readFileSync.mockReturnValue("");
+				(yaml.parse as jest.Mock).mockImplementation(() => {
+					throw new Error("Cannot parse empty file");
+				});
 				github.context.payload = {};
 
 				// Act
@@ -1187,9 +1077,7 @@ describe("main.ts", () => {
 
 				// Assert
 				expect(core.setFailed).toHaveBeenCalledWith(
-					expect.stringContaining(
-						"Failed to load or parse configuration file at ./example/config.yaml:",
-					),
+					expect.stringContaining("Failed to load or parse configuration file at ./example/config.yaml:"),
 				);
 			});
 
@@ -1197,6 +1085,9 @@ describe("main.ts", () => {
 				// Arrange
 				fs.existsSync.mockReturnValue(true);
 				fs.readFileSync.mockReturnValue('{"incomplete": json, "syntax');
+				(yaml.parse as jest.Mock).mockImplementation(() => {
+					throw new Error("YAML parse error: unexpected token");
+				});
 				github.context.payload = {};
 
 				// Act
@@ -1204,20 +1095,23 @@ describe("main.ts", () => {
 
 				// Assert
 				expect(core.setFailed).toHaveBeenCalledWith(
-					expect.stringContaining(
-						"Failed to load or parse configuration file at ./example/config.yaml:",
-					),
+					expect.stringContaining("Failed to load or parse configuration file at ./example/config.yaml:"),
 				);
 			});
 		});
 
 		describe("handler error scenarios", () => {
 			beforeEach(() => {
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 				fs.existsSync.mockReturnValue(true);
 				fs.readFileSync.mockReturnValue(JSON.stringify(sampleConfig));
+				(yaml.parse as jest.Mock).mockReturnValue(sampleConfig);
+				
+				// Reset handler mocks to defaults using mockImplementation
+				handlers.ContentLabelHandler.mockImplementation(() => handlers.mockContentLabelHandlerInstance);
+				handlers.IssueHandler.mockImplementation(() => handlers.mockIssueHandlerInstance);
+				handlers.PullRequestHandler.mockImplementation(() => handlers.mockPullRequestHandlerInstance);
+				handlers.DiscussionHandler.mockImplementation(() => handlers.mockDiscussionHandlerInstance);
 			});
 
 			it("should handle ContentLabelHandler constructor failure", async () => {
@@ -1232,9 +1126,7 @@ describe("main.ts", () => {
 				await run();
 
 				// Assert
-				expect(core.setFailed).toHaveBeenCalledWith(
-					"Failed to initialize ContentLabelHandler",
-				);
+				expect(core.setFailed).toHaveBeenCalledWith("Failed to initialize ContentLabelHandler");
 			});
 
 			it("should handle multiple handler failures gracefully", async () => {
@@ -1251,19 +1143,20 @@ describe("main.ts", () => {
 				await run();
 
 				// Assert
-				expect(core.setFailed).toHaveBeenCalledWith(
-					"Handler initialization failed",
-				);
+				expect(core.setFailed).toHaveBeenCalledWith("Handler initialization failed");
 			});
 
 			it("should handle async handler method failures", async () => {
 				// Arrange
+				fs.existsSync.mockReturnValue(true);
+				fs.readFileSync.mockReturnValue(JSON.stringify(sampleConfig));
+				(yaml.parse as jest.Mock).mockReturnValue(sampleConfig);
 				const prPayload = createPullRequestPayload("opened");
 				github.context.payload = prPayload;
-				(
-					handlers.mockContentLabelHandlerInstance
-						.performContentScanning as jest.MockedFunction<any>
-				).mockRejectedValue(new Error("Async operation failed"));
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("pr");
+				(handlers.mockContentLabelHandlerInstance.performContentScanning as jest.MockedFunction<any>).mockRejectedValue(
+					new Error("Async operation failed"),
+				);
 
 				// Act
 				await run();
@@ -1274,12 +1167,15 @@ describe("main.ts", () => {
 
 			it("should handle timeout scenarios in handler methods", async () => {
 				// Arrange
+				fs.existsSync.mockReturnValue(true);
+				fs.readFileSync.mockReturnValue(JSON.stringify(sampleConfig));
+				(yaml.parse as jest.Mock).mockReturnValue(sampleConfig);
 				const discussionPayload = createDiscussionPayload("opened");
 				github.context.payload = discussionPayload;
-				(
-					handlers.mockContentLabelHandlerInstance
-						.performContentScanning as jest.MockedFunction<any>
-				).mockRejectedValue(new Error("Operation timed out"));
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("discussion");
+				(handlers.mockContentLabelHandlerInstance.performContentScanning as jest.MockedFunction<any>).mockRejectedValue(
+					new Error("Operation timed out"),
+				);
 
 				// Act
 				await run();
@@ -1291,11 +1187,10 @@ describe("main.ts", () => {
 
 		describe("payload validation edge cases", () => {
 			beforeEach(() => {
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 				fs.existsSync.mockReturnValue(true);
 				fs.readFileSync.mockReturnValue(JSON.stringify(sampleConfig));
+				(yaml.parse as jest.Mock).mockReturnValue(sampleConfig);
 			});
 
 			it("should handle payload with null action", async () => {
@@ -1326,9 +1221,7 @@ describe("main.ts", () => {
 				await run();
 
 				// Assert
-				expect(core.info).toHaveBeenCalledWith(
-					"No issue, pull request or discussion found in payload",
-				);
+				expect(core.info).toHaveBeenCalledWith("No issue, pull request or discussion found in payload");
 			});
 
 			it("should handle payload with invalid action types", async () => {
@@ -1354,60 +1247,46 @@ describe("main.ts", () => {
 					issue: { ...issuePayload.issue, number: undefined },
 				};
 				github.context.payload = modifiedPayload;
-				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
-				);
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("issue");
 
 				// Act
 				await run();
 
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalled();
-				expect(core.info).toHaveBeenCalledWith(
-					"Scanning content of issue #undefined",
-				);
+				expect(core.info).toHaveBeenCalledWith("Scanning content of issue #undefined");
 			});
 		});
 
 		describe("concurrency and performance scenarios", () => {
 			beforeEach(() => {
-				validation.default.validate.mockReturnValue(
-					validation.mockValidationSuccess,
-				);
+				validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
 				fs.existsSync.mockReturnValue(true);
 				fs.readFileSync.mockReturnValue(JSON.stringify(sampleConfig));
+				(yaml.parse as jest.Mock).mockReturnValue(sampleConfig);
 			});
 
 			it("should handle rapid successive handler calls", async () => {
 				// Arrange
 				const issuePayload = createIssuePayload("opened");
 				github.context.payload = issuePayload;
-				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("issue");
+				(handlers.mockContentLabelHandlerInstance.performContentScanning as jest.MockedFunction<any>).mockResolvedValue(
+					void 0,
 				);
-				(
-					handlers.mockContentLabelHandlerInstance
-						.performContentScanning as jest.MockedFunction<any>
-				).mockResolvedValue(void 0);
 
 				// Act
 				await Promise.all([run(), run(), run()]);
 
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledTimes(3);
-				expect(
-					handlers.mockContentLabelHandlerInstance.performContentScanning,
-				).toHaveBeenCalledTimes(3);
+				expect(handlers.mockContentLabelHandlerInstance.performContentScanning).toHaveBeenCalledTimes(3);
 			});
 
 			it("should handle large config loading performance", async () => {
 				// Arrange
 				fs.readFileSync.mockReturnValue(JSON.stringify(largeConfig));
-				const issuePayload = createIssuePayload("opened");
-				github.context.payload = issuePayload;
-				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
-				);
+			(yaml.parse as jest.Mock).mockReturnValue(largeConfig);
 
 				const startTime = Date.now();
 
@@ -1430,18 +1309,16 @@ describe("main.ts", () => {
 					body: "x".repeat(100000), // Large body content
 				});
 				github.context.payload = largePayload;
-				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue(
-					"issue",
-				);
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("issue");
 
 				// Act
 				await run();
 
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalled();
-				expect(
-					handlers.mockContentLabelHandlerInstance.performContentScanning,
-				).toHaveBeenCalledWith(largePayload.issue);
+				expect(handlers.mockContentLabelHandlerInstance.performContentScanning).toHaveBeenCalledWith(
+					largePayload.issue,
+				);
 			});
 		});
 	});

@@ -1,14 +1,7 @@
 // Additional payload fixtures for comprehensive testing
-import type {
-	IssuesEvent,
-	PullRequestEvent,
-	DiscussionEvent,
-} from "@octokit/webhooks-types";
+import type { IssuesEvent, PullRequestEvent, DiscussionEvent } from "@octokit/webhooks-types";
 
-export const createComplexIssuePayload = (
-	action: string,
-	overrides: any = {},
-): any => ({
+export const createComplexIssuePayload = (action: string, overrides: any = {}): any => ({
 	action,
 	issue: {
 		number: 123,
@@ -34,10 +27,7 @@ export const createComplexIssuePayload = (
 	},
 });
 
-export const createComplexPRPayload = (
-	action: string,
-	overrides: any = {},
-): any => ({
+export const createComplexPRPayload = (action: string, overrides: any = {}): any => ({
 	action,
 	pull_request: {
 		number: 456,
@@ -63,10 +53,7 @@ export const createComplexPRPayload = (
 	},
 });
 
-export const createComplexDiscussionPayload = (
-	action: string,
-	overrides: any = {},
-): any => ({
+export const createComplexDiscussionPayload = (action: string, overrides: any = {}): any => ({
 	action,
 	discussion: {
 		number: 789,
@@ -90,9 +77,7 @@ export const createComplexDiscussionPayload = (
 	},
 });
 
-export const createMalformedPayload = (
-	type: "issue" | "pr" | "discussion" = "issue",
-): any => {
+export const createMalformedPayload = (type: "issue" | "pr" | "discussion" = "issue"): any => {
 	const base = {
 		action: "opened",
 	};
@@ -131,9 +116,7 @@ export const createMalformedPayload = (
 	}
 };
 
-export const createLargePayload = (
-	type: "issue" | "pr" | "discussion" = "issue",
-): any => {
+export const createLargePayload = (type: "issue" | "pr" | "discussion" = "issue"): any => {
 	const largeBody = "Lorem ipsum ".repeat(1000); // ~11KB of text
 	const manyLabels = Array.from({ length: 50 }, (_, i) => ({
 		name: `label-${i}`,
@@ -180,9 +163,7 @@ export const createLargePayload = (
 	}
 };
 
-export const createPayloadWithSpecialCharacters = (
-	type: "issue" | "pr" | "discussion" = "issue",
-): any => {
+export const createPayloadWithSpecialCharacters = (type: "issue" | "pr" | "discussion" = "issue"): any => {
 	const base = {
 		action: "labeled",
 		label: {

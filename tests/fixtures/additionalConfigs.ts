@@ -1,5 +1,5 @@
 // Additional test fixtures for main.ts testing
-import type Config from "../../src/models/config";
+import type Config from "../../src/models/internal/config";
 
 export const complexConfig: Config = {
 	...require("./config").sampleConfig,
@@ -31,17 +31,13 @@ export const complexConfig: Config = {
 	discussions: {
 		"help-wanted": {
 			actions: {
-				comments: [
-					"We'd love help with this! Please check our contribution guidelines.",
-				],
+				comments: ["We'd love help with this! Please check our contribution guidelines."],
 				assignees: ["community-manager"],
 			},
 		},
 		"feature-request": {
 			actions: {
-				comments: [
-					"Interesting feature idea! We'll discuss this with the team.",
-				],
+				comments: ["Interesting feature idea! We'll discuss this with the team."],
 				labels: ["enhancement", "needs-discussion"],
 			},
 		},
@@ -57,9 +53,7 @@ export const complexConfig: Config = {
 		security: {
 			actions: {
 				assignees: ["security-team"],
-				comments: [
-					"🔒 Security issue reported. Please email security@company.com for sensitive issues.",
-				],
+				comments: ["🔒 Security issue reported. Please email security@company.com for sensitive issues."],
 				labels: ["security", "high-priority"],
 			},
 		},
@@ -68,9 +62,7 @@ export const complexConfig: Config = {
 		"breaking-change": {
 			actions: {
 				reviewers: ["team-lead", "architecture-team"],
-				comments: [
-					"⚠️ This PR contains breaking changes. Please review carefully.",
-				],
+				comments: ["⚠️ This PR contains breaking changes. Please review carefully."],
 				labels: ["breaking-change", "needs-careful-review"],
 			},
 		},

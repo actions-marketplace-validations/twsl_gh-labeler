@@ -1,5 +1,5 @@
-import type Trigger from "@/models/config/trigger";
-import type Comments from "@/models/config/comments";
+import type Trigger from "@/models/internal/config/trigger";
+import type Comments from "@/models/internal/config/comments";
 
 interface Discussions extends Trigger, Comments {
 	category?: string;

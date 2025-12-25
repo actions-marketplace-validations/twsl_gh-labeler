@@ -3,22 +3,15 @@ import type { IssuesEvent } from "@octokit/webhooks-types";
 import _ from "lodash";
 import { AbstractHandler } from "./baseHandler";
 import type { ThreadType } from "@/types/common";
-import type Issues from "@/models/config/issues";
+import type Issues from "@/models/internal/config/issues";
 
 export class IssueHandler extends AbstractHandler {
 	getThreadType(): ThreadType {
 		return "issue";
 	}
 
-	async performActions(
-		payload: any,
-		threadData: IssuesEvent["issue"],
-	): Promise<void> {
-		const actions = await this.getLabelActions(
-			payload.label.name,
-			payload.action,
-			this.getThreadType(),
-		);
+	async performActions(payload: any, threadData: IssuesEvent["issue"]): Promise<void> {
+		const actions = await this.getLabelActions(payload.label.name, payload.action, this.getThreadType());
 
 		if (!actions) {
 			core.debug("No actions found for issue");
@@ -43,10 +36,7 @@ export class IssueHandler extends AbstractHandler {
 
 			await this.ensureUnlock(issue as any, lock, async () => {
 				for (const comment of issueActions.comments || []) {
-					const commentBody = comment.replace(
-						/{issue-author}/g,
-						threadData.user.login,
-					);
+					const commentBody = comment.replace(/{issue-author}/g, threadData.user.login);
 
 					await this.client.rest.issues.createComment({
 						...issue,
@@ -92,9 +82,7 @@ export class IssueHandler extends AbstractHandler {
 
 		// Handle assignees - add
 		if (issueActions.assignees?.add && issueActions.assignees.add.length > 0) {
-			core.debug(
-				`Adding assignees to issue: ${issueActions.assignees.add.join(", ")}`,
-			);
+			core.debug(`Adding assignees to issue: ${issueActions.assignees.add.join(", ")}`);
 			await this.client.rest.issues.addAssignees({
 				...issue,
 				assignees: issueActions.assignees.add,
@@ -102,13 +90,8 @@ export class IssueHandler extends AbstractHandler {
 		}
 
 		// Handle assignees - remove
-		if (
-			issueActions.assignees?.remove &&
-			issueActions.assignees.remove.length > 0
-		) {
-			core.debug(
-				`Removing assignees from issue: ${issueActions.assignees.remove.join(", ")}`,
-			);
+		if (issueActions.assignees?.remove && issueActions.assignees.remove.length > 0) {
+			core.debug(`Removing assignees from issue: ${issueActions.assignees.remove.join(", ")}`);
 			await this.client.rest.issues.removeAssignees({
 				...issue,
 				assignees: issueActions.assignees.remove,
@@ -165,27 +148,21 @@ export class IssueHandler extends AbstractHandler {
 		if (issueActions.convert_to_discussion) {
 			core.debug("Converting issue to discussion");
 			// Note: This requires GraphQL API and a category ID
-			core.warning(
-				"Issue to discussion conversion requires a category ID - not fully implemented",
-			);
+			core.warning("Issue to discussion conversion requires a category ID - not fully implemented");
 		}
 
 		// Handle milestones - add
-		if (
-			issueActions.milestones?.add &&
-			issueActions.milestones.add.length > 0
-		) {
+		if (issueActions.milestones?.add && issueActions.milestones.add.length > 0) {
 			core.debug("Adding milestone to issue");
 			// GitHub API only supports one milestone per issue
 			const milestoneTitle = issueActions.milestones.add[0];
 
 			try {
 				// First, get the milestone number by title
-				const { data: milestones } =
-					await this.client.rest.issues.listMilestones({
-						owner: this.owner,
-						repo: this.repo,
-					});
+				const { data: milestones } = await this.client.rest.issues.listMilestones({
+					owner: this.owner,
+					repo: this.repo,
+				});
 
 				const milestone = milestones.find((m) => m.title === milestoneTitle);
 				if (milestone) {
@@ -202,10 +179,7 @@ export class IssueHandler extends AbstractHandler {
 		}
 
 		// Handle milestones - remove
-		if (
-			issueActions.milestones?.remove &&
-			issueActions.milestones.remove.length > 0
-		) {
+		if (issueActions.milestones?.remove && issueActions.milestones.remove.length > 0) {
 			core.debug("Removing milestone from issue");
 			await this.client.rest.issues.update({
 				...issue,
@@ -215,9 +189,7 @@ export class IssueHandler extends AbstractHandler {
 
 		// Handle projects - add/remove would require GraphQL API (ProjectsV2)
 		if (issueActions.projects?.add || issueActions.projects?.remove) {
-			core.debug(
-				"Project management requires GraphQL API - not fully implemented",
-			);
+			core.debug("Project management requires GraphQL API - not fully implemented");
 		}
 	}
 }

@@ -9,11 +9,13 @@
   },
   "formatter": {
     "lineWidth": 120,
-    "useEditorconfig": true
+    "useEditorconfig": true,
+    "enabled": true
   },
   "assist": {
     "enabled": true,
     "actions": {
+      "recommended": true,
       "source": {
         "recommended": true,
         "organizeImports": "on"

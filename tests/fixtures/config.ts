@@ -1,4 +1,4 @@
-import type Config from "../../src/models/config";
+import type Config from "../../src/models/internal/config";
 
 export const sampleConfig: Config = {
 	labels: {

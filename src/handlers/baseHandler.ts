@@ -1,22 +1,15 @@
 import * as github from "@actions/github";
 import type { WebhookPayload } from "@actions/github/lib/interfaces";
-import type {
-	IssuesEvent,
-	PullRequestEvent,
-	DiscussionEvent,
-} from "@octokit/webhooks-types";
-import type Config from "@/models/config";
-import type GHActionConfig from "@/models/ghActionConfig";
-import type Actions from "@/models/config/actions";
+import type { DiscussionEvent, IssuesEvent, PullRequestEvent } from "@octokit/webhooks-types";
+import type Config from "@/models/internal/config";
+import type Actions from "@/models/internal/config/actions";
+import type GHActionConfig from "@/models/internal/ghActionConfig";
 import type { ThreadType } from "@/types/common";
 
 export interface BaseHandler {
 	performActions(
 		payload: WebhookPayload,
-		threadData:
-			| IssuesEvent["issue"]
-			| PullRequestEvent["pull_request"]
-			| DiscussionEvent["discussion"],
+		threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"],
 	): Promise<void>;
 }
 
@@ -39,24 +32,12 @@ export abstract class AbstractHandler implements BaseHandler {
 
 	abstract performActions(
 		payload: WebhookPayload,
-		threadData:
-			| IssuesEvent["issue"]
-			| PullRequestEvent["pull_request"]
-			| DiscussionEvent["discussion"],
+		threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"],
 	): Promise<void>;
 
-	protected async getLabelActions(
-		label: string,
-		event: string,
-		threadType: ThreadType,
-	): Promise<Actions | undefined> {
+	protected async getLabelActions(label: string, event: string, threadType: ThreadType): Promise<Actions | undefined> {
 		const labelName = event === "unlabeled" ? `-${label}` : label;
-		const threadKey =
-			threadType === "issue"
-				? "issues"
-				: threadType === "pr"
-					? "prs"
-					: "discussions";
+		const threadKey = threadType === "issue" ? "issues" : threadType === "pr" ? "prs" : "discussions";
 
 		// Get the config which should have labels.add, labels.remove, and labels.default
 		const labels = this.config.labels;
@@ -86,6 +67,10 @@ export abstract class AbstractHandler implements BaseHandler {
 		// If no specific config found, check default
 		if (!labelConfig && labels.default) {
 			labelConfig = labels.default[cleanLabel];
+			// Check for wildcard default if no specific default found
+			if (!labelConfig && labels.default["*"]) {
+				labelConfig = labels.default["*"];
+			}
 		}
 
 		if (!labelConfig) {
@@ -136,11 +121,7 @@ export abstract class AbstractHandler implements BaseHandler {
 			const lockParams = lock.reason
 				? {
 						...issue,
-						lock_reason: lock.reason as
-							| "resolved"
-							| "off-topic"
-							| "too heated"
-							| "spam",
+						lock_reason: lock.reason as "resolved" | "off-topic" | "too heated" | "spam",
 						headers: {
 							Accept: "application/vnd.github.sailor-v-preview+json",
 						},

@@ -1,16 +1,12 @@
 import * as core from "@actions/core";
-import type {
-	IssuesEvent,
-	PullRequestEvent,
-	DiscussionEvent,
-} from "@octokit/webhooks-types";
+import type { IssuesEvent, PullRequestEvent, DiscussionEvent } from "@octokit/webhooks-types";
 import { AbstractHandler } from "@/handlers/baseHandler";
 import { IssueHandler } from "@/handlers/issueHandler";
 import { PullRequestHandler } from "@/handlers/pullRequestHandler";
 import { DiscussionHandler } from "@/handlers/discussionHandler";
 import type { ThreadType } from "@/types/common";
-import type GHActionConfig from "@/models/ghActionConfig";
-import type Config from "@/models/config";
+import type GHActionConfig from "@/models/internal/ghActionConfig";
+import type Config from "@/models/internal/config";
 
 export class RegexHandler extends AbstractHandler {
 	private issueHandler: IssueHandler;
@@ -31,10 +27,7 @@ export class RegexHandler extends AbstractHandler {
 
 	async performActions(
 		payload: any,
-		threadData:
-			| IssuesEvent["issue"]
-			| PullRequestEvent["pull_request"]
-			| DiscussionEvent["discussion"],
+		threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"],
 	): Promise<void> {
 		// Determine thread type from the payload
 		let threadType: ThreadType;
@@ -50,10 +43,7 @@ export class RegexHandler extends AbstractHandler {
 		}
 
 		// Check if there are regex patterns that match the content
-		const matchingLabels = await this.findMatchingRegexLabels(
-			threadData,
-			threadType,
-		);
+		const matchingLabels = await this.findMatchingRegexLabels(threadData, threadType);
 
 		if (matchingLabels.length === 0) {
 			core.debug("No regex patterns matched the content");
@@ -75,10 +65,7 @@ export class RegexHandler extends AbstractHandler {
 			try {
 				switch (threadType) {
 					case "issue":
-						await this.issueHandler.performActions(
-							syntheticPayload,
-							threadData as IssuesEvent["issue"],
-						);
+						await this.issueHandler.performActions(syntheticPayload, threadData as IssuesEvent["issue"]);
 						break;
 					case "pr":
 						await this.pullRequestHandler.performActions(
@@ -87,10 +74,7 @@ export class RegexHandler extends AbstractHandler {
 						);
 						break;
 					case "discussion":
-						await this.discussionHandler.performActions(
-							syntheticPayload,
-							threadData as DiscussionEvent["discussion"],
-						);
+						await this.discussionHandler.performActions(syntheticPayload, threadData as DiscussionEvent["discussion"]);
 						break;
 					default:
 						core.warning(`Unknown thread type: ${threadType}`);
@@ -102,10 +86,7 @@ export class RegexHandler extends AbstractHandler {
 	}
 
 	private async findMatchingRegexLabels(
-		threadData:
-			| IssuesEvent["issue"]
-			| PullRequestEvent["pull_request"]
-			| DiscussionEvent["discussion"],
+		threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"],
 		threadType: ThreadType,
 	): Promise<string[]> {
 		const regexConfig = this.config.regex;
@@ -117,16 +98,11 @@ export class RegexHandler extends AbstractHandler {
 		const scanTitle = this.config.scanTitle !== false;
 		const scanBody = this.config.scanBody !== false;
 
-		const textToScan = [
-			scanTitle ? threadData.title : "",
-			scanBody ? threadData.body || "" : "",
-		].join("\n");
+		const textToScan = [scanTitle ? threadData.title : "", scanBody ? threadData.body || "" : ""].join("\n");
 
 		// Handle labels property - discussions might not have labels
 		const currentLabels =
-			"labels" in threadData && threadData.labels
-				? threadData.labels.map((label: any) => label.name)
-				: [];
+			"labels" in threadData && threadData.labels ? threadData.labels.map((label: any) => label.name) : [];
 		const matchingLabels: string[] = [];
 
 		// Check each regex pattern
@@ -142,12 +118,7 @@ export class RegexHandler extends AbstractHandler {
 				core.debug(`Regex pattern "${pattern}" matched content`);
 
 				// Check if this action applies to the current thread type
-				const threadKey =
-					threadType === "issue"
-						? "issues"
-						: threadType === "pr"
-							? "prs"
-							: "discussions";
+				const threadKey = threadType === "issue" ? "issues" : threadType === "pr" ? "prs" : "discussions";
 				const threadSpecificActions = (actions as any)[threadKey];
 
 				// Use thread-specific actions if available, otherwise use general actions
@@ -157,18 +128,11 @@ export class RegexHandler extends AbstractHandler {
 					// Check if there are labels to add
 					if ("labels" in applicableActions) {
 						const labelsConfig = (applicableActions as any).labels;
-						if (
-							labelsConfig &&
-							typeof labelsConfig === "object" &&
-							"add" in labelsConfig
-						) {
+						if (labelsConfig && typeof labelsConfig === "object" && "add" in labelsConfig) {
 							const labelsToAdd = labelsConfig.add;
 							if (Array.isArray(labelsToAdd)) {
 								for (const label of labelsToAdd) {
-									if (
-										typeof label === "string" &&
-										!currentLabels.includes(label)
-									) {
+									if (typeof label === "string" && !currentLabels.includes(label)) {
 										matchingLabels.push(label);
 									}
 								}
@@ -178,10 +142,7 @@ export class RegexHandler extends AbstractHandler {
 
 					// If no specific labels config, treat the pattern name as a potential label
 					// This allows for backward compatibility with simple regex configs
-					if (
-						!("labels" in applicableActions) &&
-						!currentLabels.includes(pattern)
-					) {
+					if (!("labels" in applicableActions) && !currentLabels.includes(pattern)) {
 						matchingLabels.push(pattern);
 					}
 				}
@@ -196,16 +157,10 @@ export class RegexHandler extends AbstractHandler {
 	 * This method provides an alternative interface similar to ContentLabelHandler
 	 */
 	async performRegexScanning(
-		threadData:
-			| IssuesEvent["issue"]
-			| PullRequestEvent["pull_request"]
-			| DiscussionEvent["discussion"],
+		threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"],
 		threadType: ThreadType,
 	): Promise<void> {
-		const matchingLabels = await this.findMatchingRegexLabels(
-			threadData,
-			threadType,
-		);
+		const matchingLabels = await this.findMatchingRegexLabels(threadData, threadType);
 
 		if (matchingLabels.length > 0) {
 			core.info(`Adding regex-based labels: ${matchingLabels.join(", ")}`);

@@ -1,10 +1,6 @@
-import { jest } from "@jest/globals";
 import type { WebhookPayload } from "@actions/github/lib/interfaces";
-import type {
-	IssuesEvent,
-	PullRequestEvent,
-	DiscussionEvent,
-} from "@octokit/webhooks-types";
+import { jest } from "@jest/globals";
+import type { DiscussionEvent, IssuesEvent, PullRequestEvent } from "@octokit/webhooks-types";
 
 // Common test input configurations
 export const testInputConfigs = {
@@ -101,34 +97,48 @@ export const setupDefaultMocks = async () => {
 	const yaml = await import("yaml");
 
 	// Setup default mocks
-	core.getInput.mockReturnValue("");
+	core.getInput.mockImplementation((name: string) => {
+		switch (name) {
+			case "github-token":
+				return "test-token";
+			case "config-path":
+				return "";
+			case "process":
+				return "";
+			default:
+				return "";
+		}
+	});
 	fs.existsSync.mockReturnValue(true);
 	fs.readFileSync.mockReturnValue(JSON.stringify(sampleConfig));
 	yaml.parse.mockReturnValue(sampleConfig);
-	validation.default.validate.mockReturnValue(validation.mockValidationSuccess);
+
+	// Setup smart validation mock
+	validation.default.validate.mockImplementation((input: any) => {
+		return validation.mockSchemaValidate(input);
+	});
 
 	// Setup default handler mocks
-	handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue(
-		"issue",
-	);
+	handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("issue");
 	handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue("issue");
-	handlers.mockPullRequestHandlerInstance.getThreadType.mockReturnValue(
-		"pull_request",
-	);
-	handlers.mockDiscussionHandlerInstance.getThreadType.mockReturnValue(
-		"discussion",
-	);
+	handlers.mockPullRequestHandlerInstance.getThreadType.mockReturnValue("pull_request");
+	handlers.mockDiscussionHandlerInstance.getThreadType.mockReturnValue("discussion");
+	
+	// Reset handler constructor mocks to return instances (not throw)
+	handlers.ContentLabelHandler.mockImplementation(() => handlers.mockContentLabelHandlerInstance);
+	handlers.IssueHandler.mockImplementation(() => handlers.mockIssueHandlerInstance);
+	handlers.PullRequestHandler.mockImplementation(() => handlers.mockPullRequestHandlerInstance);
+	handlers.DiscussionHandler.mockImplementation(() => handlers.mockDiscussionHandlerInstance);
 };
 
-export const resetMocks = () => {
-	jest.resetAllMocks();
+export const resetMocks = async () => {
+	const handlers = await import("./handlers");
+	handlers.clearAllHandlerMocks();
+	jest.clearAllMocks();
 };
 
 // Test scenario generators
-export const createTestScenario = (
-	type: "success" | "error",
-	scenario: any,
-) => {
+export const createTestScenario = (type: "success" | "error", scenario: any) => {
 	return {
 		...scenario,
 		type,
@@ -136,48 +146,30 @@ export const createTestScenario = (
 };
 
 // Common expectations helpers
-export const expectValidationCalled = (
-	validation: any,
-	expectedConfig: any,
-) => {
+export const expectValidationCalled = (validation: any, expectedConfig: any) => {
 	expect(validation.default.validate).toHaveBeenCalledWith(expectedConfig, {
 		abortEarly: false,
 	});
 };
 
-export const expectHandlerCalled = (
-	handler: any,
-	config: any,
-	...args: any[]
-) => {
+export const expectHandlerCalled = (handler: any, config: any, ...args: any[]) => {
 	expect(handler).toHaveBeenCalledWith(config, ...args);
 };
 
 export const expectContentScanning = (handlers: any, issue: any) => {
-	expect(
-		handlers.mockContentLabelHandlerInstance.performContentScanning,
-	).toHaveBeenCalledWith(issue);
+	expect(handlers.mockContentLabelHandlerInstance.performContentScanning).toHaveBeenCalledWith(issue);
 };
 
 export const expectLabelAction = (
 	handlers: any,
 	payload: any,
-	threadData:
-		| IssuesEvent["issue"]
-		| PullRequestEvent["pull_request"]
-		| DiscussionEvent["discussion"],
+	threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"],
 ) => {
-	expect(handlers.mockIssueHandlerInstance.performActions).toHaveBeenCalledWith(
-		payload,
-		threadData,
-	);
+	expect(handlers.mockIssueHandlerInstance.performActions).toHaveBeenCalledWith(payload, threadData);
 };
 
 // Error simulation helpers
-export const simulateFileSystemError = (
-	fs: any,
-	errorType: "permission" | "notfound" | "parse",
-) => {
+export const simulateFileSystemError = (fs: any, errorType: "permission" | "notfound" | "parse") => {
 	switch (errorType) {
 		case "permission":
 			fs.existsSync.mockReturnValue(true);
@@ -197,11 +189,7 @@ export const simulateFileSystemError = (
 	}
 };
 
-export const simulateHandlerError = (
-	handlers: any,
-	errorType: "instantiation" | "execution",
-	message: string,
-) => {
+export const simulateHandlerError = (handlers: any, errorType: "instantiation" | "execution", message: string) => {
 	switch (errorType) {
 		case "instantiation":
 			handlers.ContentLabelHandler.mockImplementation(() => {
@@ -209,9 +197,7 @@ export const simulateHandlerError = (
 			});
 			break;
 		case "execution":
-			handlers.mockContentLabelHandlerInstance.performContentScanning.mockRejectedValueOnce(
-				new Error(message),
-			);
+			handlers.mockContentLabelHandlerInstance.performContentScanning.mockRejectedValueOnce(new Error(message));
 			break;
 	}
 };
@@ -244,10 +230,7 @@ export const measureExecutionTime = async (fn: () => Promise<void>) => {
 	return Date.now() - startTime;
 };
 
-export const createLargePayload = (
-	type: "issue" | "pr" | "discussion",
-	size = 10000,
-) => {
+export const createLargePayload = (type: "issue" | "pr" | "discussion", size = 10000) => {
 	const largeBody = "x".repeat(size);
 	return {
 		action: "opened",

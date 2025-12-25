@@ -4,10 +4,7 @@ import Joi, { type ObjectSchema } from "joi";
 const ghActionConfigSchema: ObjectSchema = Joi.object({
 	"github-token": Joi.string().trim().max(100),
 
-	"config-path": Joi.string()
-		.trim()
-		.max(200)
-		.default(".github/gh-labeler.yaml"),
+	"config-path": Joi.string().trim().max(200).default(".github/gh-labeler.yaml"),
 
 	process: Joi.array()
 		.items(Joi.string().trim().valid("issue", "pr", "discussion"))

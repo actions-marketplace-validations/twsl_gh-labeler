@@ -28,8 +28,8 @@ jest.unstable_mockModule("@actions/github", () => ({
 
 // Now import after mocking
 const { RegexHandler } = await import("@/handlers/regexHandler");
-import type Config from "@/models/config";
-import type GHActionConfig from "@/models/ghActionConfig";
+import type Config from "@/models/internal/config";
+import type GHActionConfig from "@/models/internal/ghActionConfig";
 
 describe("RegexHandler", () => {
 	let regexHandler: InstanceType<typeof RegexHandler>;
@@ -69,9 +69,7 @@ describe("RegexHandler", () => {
 				labels: [],
 			};
 
-			const matchingLabels = await (
-				regexHandler as any
-			).findMatchingRegexLabels(threadData, "issue");
+			const matchingLabels = await (regexHandler as any).findMatchingRegexLabels(threadData, "issue");
 
 			expect(matchingLabels).toContain("bug");
 		});
@@ -84,9 +82,7 @@ describe("RegexHandler", () => {
 				labels: [],
 			};
 
-			const matchingLabels = await (
-				regexHandler as any
-			).findMatchingRegexLabels(threadData, "issue");
+			const matchingLabels = await (regexHandler as any).findMatchingRegexLabels(threadData, "issue");
 
 			expect(matchingLabels).toContain("bug");
 			expect(matchingLabels).toContain("enhancement");
@@ -100,9 +96,7 @@ describe("RegexHandler", () => {
 				labels: [{ name: "bug" }],
 			};
 
-			const matchingLabels = await (
-				regexHandler as any
-			).findMatchingRegexLabels(threadData, "issue");
+			const matchingLabels = await (regexHandler as any).findMatchingRegexLabels(threadData, "issue");
 
 			expect(matchingLabels).not.toContain("bug");
 		});
@@ -115,9 +109,7 @@ describe("RegexHandler", () => {
 				labels: [],
 			};
 
-			const matchingLabels = await (
-				regexHandler as any
-			).findMatchingRegexLabels(threadData, "issue");
+			const matchingLabels = await (regexHandler as any).findMatchingRegexLabels(threadData, "issue");
 
 			expect(matchingLabels).toContain("bug");
 			expect(matchingLabels).toContain("enhancement");
@@ -131,9 +123,7 @@ describe("RegexHandler", () => {
 				labels: [],
 			};
 
-			const matchingLabels = await (
-				regexHandler as any
-			).findMatchingRegexLabels(threadData, "issue");
+			const matchingLabels = await (regexHandler as any).findMatchingRegexLabels(threadData, "issue");
 
 			expect(matchingLabels).toHaveLength(0);
 		});
@@ -146,9 +136,7 @@ describe("RegexHandler", () => {
 				// No labels property like discussions might have
 			};
 
-			const matchingLabels = await (
-				regexHandler as any
-			).findMatchingRegexLabels(threadData, "discussion");
+			const matchingLabels = await (regexHandler as any).findMatchingRegexLabels(threadData, "discussion");
 
 			expect(matchingLabels).toContain("bug");
 		});
@@ -163,10 +151,7 @@ describe("RegexHandler", () => {
 				labels: [],
 			};
 
-			const addLabelsSpy = jest.spyOn(
-				(regexHandler as any).client.rest.issues,
-				"addLabels",
-			);
+			const addLabelsSpy = jest.spyOn((regexHandler as any).client.rest.issues, "addLabels");
 
 			await regexHandler.performRegexScanning(threadData, "issue");
 
@@ -186,10 +171,7 @@ describe("RegexHandler", () => {
 				labels: [],
 			};
 
-			const addLabelsSpy = jest.spyOn(
-				(regexHandler as any).client.rest.issues,
-				"addLabels",
-			);
+			const addLabelsSpy = jest.spyOn((regexHandler as any).client.rest.issues, "addLabels");
 
 			await regexHandler.performRegexScanning(threadData, "issue");
 

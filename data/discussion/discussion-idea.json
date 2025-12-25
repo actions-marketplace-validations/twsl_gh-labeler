@@ -1,0 +1,31 @@
+{
+  "action": "created",
+  "discussion": {
+    "id": 302,
+    "number": 302,
+    "title": "Idea: Add machine learning-based label suggestions",
+    "body": "What if we could use machine learning to automatically suggest labels based on the content?\n\n## Proposal\n- Train a model on existing labeled issues\n- Suggest labels when new issues are created\n- Allow users to accept/reject suggestions\n\n## Benefits\n- Faster issue triage\n- More consistent labeling\n- Reduced manual work\n\nWhat does everyone think?",
+    "state": "open",
+    "category": {
+      "id": "DIC_kwDOABCD02",
+      "name": "Ideas",
+      "emoji": "💡",
+      "slug": "ideas"
+    },
+    "user": {
+      "login": "innovator"
+    },
+    "node_id": "D_kwDOABCD1234567891",
+    "labels": []
+  },
+  "repository": {
+    "name": "test-repo",
+    "full_name": "test-owner/test-repo",
+    "owner": {
+      "login": "test-owner"
+    }
+  },
+  "sender": {
+    "login": "innovator"
+  }
+}

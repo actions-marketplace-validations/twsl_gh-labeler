@@ -7,11 +7,7 @@ import type {
 	DiscussionLabeledEvent,
 } from "@octokit/webhooks-types";
 
-export const createIssuePayload = (
-	action: string,
-	issueData?: any,
-	labelData?: any,
-): any => ({
+export const createIssuePayload = (action: string, issueData?: any, labelData?: any): any => ({
 	action,
 	issue: {
 		number: 123,
@@ -30,11 +26,7 @@ export const createIssuePayload = (
 		: undefined,
 });
 
-export const createPullRequestPayload = (
-	action: string,
-	prData?: any,
-	labelData?: any,
-): any => ({
+export const createPullRequestPayload = (action: string, prData?: any, labelData?: any): any => ({
 	action,
 	pull_request: {
 		number: 456,
@@ -53,11 +45,7 @@ export const createPullRequestPayload = (
 		: undefined,
 });
 
-export const createDiscussionPayload = (
-	action: string,
-	discussionData?: any,
-	labelData?: any,
-): any => ({
+export const createDiscussionPayload = (action: string, discussionData?: any, labelData?: any): any => ({
 	action,
 	discussion: {
 		number: 789,

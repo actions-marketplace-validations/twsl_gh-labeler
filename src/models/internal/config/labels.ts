@@ -1,4 +1,4 @@
-import type Actions from "@/models/config/actions";
+import type Actions from "@/models/internal/config/actions";
 
 interface Labels {
 	add?: Record<string, Actions> | string[];

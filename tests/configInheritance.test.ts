@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
-import type Config from "@/models/config";
-import type Actions from "@/models/config/actions";
+import type Config from "@/models/internal/config";
+import type Actions from "@/models/internal/config/actions";
 
 describe("Config Inheritance", () => {
 	describe("Config structure validation", () => {
@@ -68,9 +68,7 @@ describe("Config Inheritance", () => {
 				},
 			};
 
-			const action = (config.labels?.add as Record<string, Actions>)[
-				"needs-review"
-			];
+			const action = (config.labels?.add as Record<string, Actions>)["needs-review"];
 			expect(action.prs?.reviewers?.add).toEqual(["reviewer1", "reviewer2"]);
 			expect(action.prs?.assignees?.add).toEqual(["assignee1"]);
 		});
@@ -164,8 +162,7 @@ describe("Config Inheritance", () => {
 				},
 			};
 
-			const secAction = (config.labels?.add as Record<string, Actions>)
-				.security;
+			const secAction = (config.labels?.add as Record<string, Actions>).security;
 			expect(secAction.labels?.add).toEqual(["high-priority", "needs-triage"]);
 			expect(secAction.issues?.labels?.add).toEqual(["verified"]);
 			expect(secAction.prs?.labels?.add).toEqual(["security-review"]);
@@ -258,9 +255,7 @@ describe("Config Inheritance", () => {
 				},
 			};
 
-			const action = (config.labels?.add as Record<string, Actions>)[
-				"multi-type"
-			];
+			const action = (config.labels?.add as Record<string, Actions>)["multi-type"];
 			expect(action.issues?.close).toBe(true);
 			expect(action.prs?.close).toBe(false);
 			expect(action.discussions?.category).toBe("General");

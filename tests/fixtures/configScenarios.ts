@@ -1,4 +1,4 @@
-import type Config from "../../src/models/config";
+import type Config from "../../src/models/internal/config";
 
 export const sampleConfig: Config = {
 	labels: {
@@ -113,11 +113,7 @@ export const configWithComplexActions: Config = {
 			label: "multi-action",
 			actions: {
 				assignees: ["user1", "user2", "user3"],
-				comments: [
-					"First comment",
-					"Second comment with more details",
-					"Third comment with even more information",
-				],
+				comments: ["First comment", "Second comment with more details", "Third comment with even more information"],
 				reviewers: ["reviewer1", "reviewer2"],
 				milestones: ["v1.0", "v2.0"],
 			},

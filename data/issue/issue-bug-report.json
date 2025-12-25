@@ -1,0 +1,24 @@
+{
+  "action": "opened",
+  "issue": {
+    "number": 101,
+    "title": "Bug: Application crashes on startup",
+    "body": "The application crashes when I try to start it. This seems like a critical bug that needs immediate attention.\n\n## Steps to Reproduce\n1. Start the application\n2. Click on settings\n3. Application crashes\n\n## Expected Behavior\nApplication should open settings page",
+    "state": "open",
+    "labels": [],
+    "user": {
+      "login": "bug-reporter"
+    },
+    "node_id": "I_kwDOABCD1234567890"
+  },
+  "repository": {
+    "name": "test-repo",
+    "full_name": "test-owner/test-repo",
+    "owner": {
+      "login": "test-owner"
+    }
+  },
+  "sender": {
+    "login": "bug-reporter"
+  }
+}

@@ -3,22 +3,15 @@ import type { PullRequestEvent } from "@octokit/webhooks-types";
 import _ from "lodash";
 import { AbstractHandler } from "./baseHandler";
 import type { ThreadType } from "@/types/common";
-import type PRs from "@/models/config/prs";
+import type PRs from "@/models/internal/config/prs";
 
 export class PullRequestHandler extends AbstractHandler {
 	getThreadType(): ThreadType {
 		return "pr";
 	}
 
-	async performActions(
-		payload: any,
-		threadData: PullRequestEvent["pull_request"],
-	): Promise<void> {
-		const actions = await this.getLabelActions(
-			payload.label.name,
-			payload.action,
-			this.getThreadType(),
-		);
+	async performActions(payload: any, threadData: PullRequestEvent["pull_request"]): Promise<void> {
+		const actions = await this.getLabelActions(payload.label.name, payload.action, this.getThreadType());
 
 		if (!actions) {
 			core.debug("No actions found for pull request");
@@ -43,10 +36,7 @@ export class PullRequestHandler extends AbstractHandler {
 
 			await this.ensureUnlock(issue as any, lock, async () => {
 				for (const comment of prActions.comments || []) {
-					const commentBody = comment.replace(
-						/{issue-author}/g,
-						threadData.user?.login || "unknown",
-					);
+					const commentBody = comment.replace(/{issue-author}/g, threadData.user?.login || "unknown");
 
 					await this.client.rest.issues.createComment({
 						...issue,
@@ -92,9 +82,7 @@ export class PullRequestHandler extends AbstractHandler {
 
 		// Handle reviewers - add
 		if (prActions.reviewers?.add && prActions.reviewers.add.length > 0) {
-			core.debug(
-				`Adding reviewers to PR: ${prActions.reviewers.add.join(", ")}`,
-			);
+			core.debug(`Adding reviewers to PR: ${prActions.reviewers.add.join(", ")}`);
 			const author = threadData.user?.login || "";
 			const reviewers = _.without(prActions.reviewers.add, author);
 
@@ -105,17 +93,13 @@ export class PullRequestHandler extends AbstractHandler {
 
 		// Handle reviewers - remove
 		if (prActions.reviewers?.remove && prActions.reviewers.remove.length > 0) {
-			core.debug(
-				`Removing reviewers from PR: ${prActions.reviewers.remove.join(", ")}`,
-			);
+			core.debug(`Removing reviewers from PR: ${prActions.reviewers.remove.join(", ")}`);
 			await this.removeReviewers(prActions.reviewers.remove, threadData.number);
 		}
 
 		// Handle assignees - add
 		if (prActions.assignees?.add && prActions.assignees.add.length > 0) {
-			core.debug(
-				`Adding assignees to PR: ${prActions.assignees.add.join(", ")}`,
-			);
+			core.debug(`Adding assignees to PR: ${prActions.assignees.add.join(", ")}`);
 			await this.client.rest.issues.addAssignees({
 				...issue,
 				assignees: prActions.assignees.add,
@@ -124,9 +108,7 @@ export class PullRequestHandler extends AbstractHandler {
 
 		// Handle assignees - remove
 		if (prActions.assignees?.remove && prActions.assignees.remove.length > 0) {
-			core.debug(
-				`Removing assignees from PR: ${prActions.assignees.remove.join(", ")}`,
-			);
+			core.debug(`Removing assignees from PR: ${prActions.assignees.remove.join(", ")}`);
 			await this.client.rest.issues.removeAssignees({
 				...issue,
 				assignees: prActions.assignees.remove,
@@ -151,10 +133,7 @@ export class PullRequestHandler extends AbstractHandler {
 		}
 	}
 
-	private async addReviewers(
-		reviewers: string[],
-		pullNumber: number,
-	): Promise<void> {
+	private async addReviewers(reviewers: string[], pullNumber: number): Promise<void> {
 		if (reviewers.length === 0) return;
 
 		try {
@@ -169,10 +148,7 @@ export class PullRequestHandler extends AbstractHandler {
 		}
 	}
 
-	private async removeReviewers(
-		reviewers: string[],
-		pullNumber: number,
-	): Promise<void> {
+	private async removeReviewers(reviewers: string[], pullNumber: number): Promise<void> {
 		if (reviewers.length === 0) return;
 
 		try {
