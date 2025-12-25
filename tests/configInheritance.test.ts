@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "@jest/globals";
+import { describe, expect, it } from "@jest/globals";
 import type Config from "@/models/config";
 import type Actions from "@/models/config/actions";
 
@@ -164,7 +164,8 @@ describe("Config Inheritance", () => {
 				},
 			};
 
-			const secAction = (config.labels?.add as Record<string, Actions>).security;
+			const secAction = (config.labels?.add as Record<string, Actions>)
+				.security;
 			expect(secAction.labels?.add).toEqual(["high-priority", "needs-triage"]);
 			expect(secAction.issues?.labels?.add).toEqual(["verified"]);
 			expect(secAction.prs?.labels?.add).toEqual(["security-review"]);

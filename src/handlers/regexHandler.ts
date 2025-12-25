@@ -114,8 +114,8 @@ export class RegexHandler extends AbstractHandler {
 			return [];
 		}
 
-		const scanTitle = (this.config as any)["scan-title"] !== false;
-		const scanBody = (this.config as any)["scan-body"] !== false;
+		const scanTitle = this.config.scanTitle !== false;
+		const scanBody = this.config.scanBody !== false;
 
 		const textToScan = [
 			scanTitle ? threadData.title : "",

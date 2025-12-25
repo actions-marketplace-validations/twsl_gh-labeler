@@ -15,9 +15,7 @@ const { IssueHandler } = await import("../src/handlers/issueHandler");
 const { PullRequestHandler } = await import(
 	"../src/handlers/pullRequestHandler"
 );
-const { DiscussionHandler } = await import(
-	"../src/handlers/discussionHandler"
-);
+const { DiscussionHandler } = await import("../src/handlers/discussionHandler");
 const core = await import("./fixtures/core");
 const githubModule = await import("./fixtures/github");
 import type Config from "@/models/config";

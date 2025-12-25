@@ -43,15 +43,20 @@ export class ContentLabelHandler extends AbstractHandler {
 			return;
 		}
 
-		const scanTitle = this.config["scan-title"] !== false;
-		const scanBody = this.config["scan-body"] !== false;
+		const scanTitle = this.config.scanTitle !== false;
+		const scanBody = this.config.scanBody !== false;
 
-		const textToScan = [
-			scanTitle ? threadData.title : "",
-			scanBody ? threadData.body || "" : "",
-		].join("\n");
+	const textToScan = [
+		scanTitle ? threadData.title : "",
+		scanBody ? threadData.body || "" : "",
+	].join("\n");
 
-		const currentLabels = threadData.labels.map((label) => label.name);
+	const currentLabels =
+		"labels" in threadData && threadData.labels
+			? threadData.labels.map(
+					(label: { name?: string | null }) => label.name,
+				)
+			: [];
 		const labelsToAdd: string[] = [];
 
 		for (const rule of contentRules) {
