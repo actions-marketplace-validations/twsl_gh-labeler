@@ -309,6 +309,7 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					configWithContentRules,
+					expect.objectContaining({ "github-token": expect.any(String) }),
 					"issue",
 				);
 				expect(core.info).toHaveBeenCalledWith(
@@ -333,6 +334,7 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					configWithContentRules,
+					expect.objectContaining({ "github-token": expect.any(String) }),
 					"issue",
 				);
 				expect(
@@ -354,6 +356,7 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					configWithContentRules,
+					expect.objectContaining({ "github-token": expect.any(String) }),
 					"pr",
 				);
 				expect(core.info).toHaveBeenCalledWith(
@@ -378,6 +381,7 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					configWithContentRules,
+					expect.objectContaining({ "github-token": expect.any(String) }),
 					"pr",
 				);
 				expect(
@@ -399,6 +403,7 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					configWithContentRules,
+					expect.objectContaining({ "github-token": expect.any(String) }),
 					"discussion",
 				);
 				expect(core.info).toHaveBeenCalledWith(
@@ -443,6 +448,7 @@ describe("main.ts", () => {
 				});
 				github.context.payload = issuePayload;
 				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue(
+					expect.objectContaining({ "github-token": expect.any(String) }),
 					"issue",
 				);
 
@@ -591,6 +597,7 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					configWithContentRules,
+					expect.objectContaining({ "github-token": expect.any(String) }),
 					"issue",
 				);
 				expect(
@@ -908,6 +915,7 @@ describe("main.ts", () => {
 				// Assert
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					sampleConfig,
+					expect.objectContaining({ "github-token": expect.any(String) }),
 					"issue",
 				);
 				expect(core.info).toHaveBeenCalledWith(
@@ -979,6 +987,7 @@ describe("main.ts", () => {
 				complexIssuePayload.label = { name: "critical", color: "ff0000" };
 				github.context.payload = complexIssuePayload;
 				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue(
+					expect.objectContaining({ "github-token": expect.any(String) }),
 					"issue",
 				);
 
@@ -1407,6 +1416,7 @@ describe("main.ts", () => {
 				expect(executionTime).toBeLessThan(1000); // Should complete within 1 second
 				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
 					largeConfig,
+					expect.objectContaining({ "github-token": expect.any(String) }),
 					"issue",
 				);
 			});

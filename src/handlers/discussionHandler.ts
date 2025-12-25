@@ -2,8 +2,8 @@ import * as core from "@actions/core";
 import type { DiscussionEvent } from "@octokit/webhooks-types";
 import _ from "lodash";
 import { AbstractHandler } from "./baseHandler";
-import type Actions from "@/models/config/actions";
 import type { ThreadType } from "@/types/common";
+import type Discussions from "@/models/config/discussions";
 
 export class DiscussionHandler extends AbstractHandler {
 	getThreadType(): ThreadType {
@@ -14,7 +14,7 @@ export class DiscussionHandler extends AbstractHandler {
 		payload: any,
 		threadData: DiscussionEvent["discussion"],
 	): Promise<void> {
-		const actions: Actions | undefined = await this.getLabelActions(
+		const actions = await this.getLabelActions(
 			payload.label.name,
 			payload.action,
 			this.getThreadType(),
@@ -25,20 +25,250 @@ export class DiscussionHandler extends AbstractHandler {
 			return;
 		}
 
-		// Discussion handlers would use different APIs
-		// This is a placeholder for future implementation
-		core.info("Discussion handling is not fully implemented yet");
+		const discussionActions = actions as Discussions;
 
-		// We could handle comments and labels for discussions
-		// using the GraphQL API when needed
-		if (actions.comments) {
-			core.debug("Commenting on discussion would go here");
-			// Implementation would use GraphQL API
+		// Handle comments (via GraphQL API)
+		if (discussionActions.comments && discussionActions.comments.length > 0) {
+			core.debug("Commenting on discussion");
+			try {
+				const mutation = `
+					mutation($discussionId: ID!, $body: String!) {
+						addDiscussionComment(input: {discussionId: $discussionId, body: $body}) {
+							comment {
+								id
+							}
+						}
+					}
+				`;
+
+				for (const comment of discussionActions.comments) {
+					const commentBody = comment.replace(
+						/{issue-author}/g,
+						threadData.user?.login || "unknown",
+					);
+
+					await this.client.graphql(mutation, {
+						discussionId: threadData.node_id,
+						body: commentBody,
+					});
+				}
+			} catch (error) {
+				core.warning(`Failed to comment on discussion: ${error}`);
+			}
 		}
 
-		if (actions.labels) {
-			core.debug("Labeling discussion would go here");
-			// Implementation would use GraphQL API
+		// Handle labels (via GraphQL API)
+		if (discussionActions.labels?.add) {
+			const labelsToAdd = Array.isArray(discussionActions.labels.add)
+				? discussionActions.labels.add
+				: Object.keys(discussionActions.labels.add);
+
+			if (labelsToAdd.length > 0) {
+				core.debug(`Adding labels to discussion: ${labelsToAdd.join(", ")}`);
+				try {
+					// First get label IDs
+					const labelQuery = `
+						query($owner: String!, $name: String!, $labels: [String!]!) {
+							repository(owner: $owner, name: $name) {
+								labels(first: 100, query: $labels) {
+									nodes {
+										id
+										name
+									}
+								}
+							}
+						}
+					`;
+
+					const labelData: any = await this.client.graphql(labelQuery, {
+						owner: this.owner,
+						name: this.repo,
+						labels: labelsToAdd.join(" "),
+					});
+
+					const labelIds = labelData.repository.labels.nodes
+						.filter((l: any) => labelsToAdd.includes(l.name))
+						.map((l: any) => l.id);
+
+					if (labelIds.length > 0) {
+						const mutation = `
+							mutation($discussionId: ID!, $labelIds: [ID!]!) {
+								addLabelsToLabelable(input: {labelableId: $discussionId, labelIds: $labelIds}) {
+									labelable {
+										... on Discussion {
+											id
+										}
+									}
+								}
+							}
+						`;
+
+						await this.client.graphql(mutation, {
+							discussionId: threadData.node_id,
+							labelIds,
+						});
+					}
+				} catch (error) {
+					core.warning(`Failed to add labels to discussion: ${error}`);
+				}
+			}
+		}
+
+		// Handle labels - remove
+		if (discussionActions.labels?.remove) {
+			const labelsToRemove = Array.isArray(discussionActions.labels.remove)
+				? discussionActions.labels.remove
+				: Object.keys(discussionActions.labels.remove);
+
+			if (labelsToRemove.length > 0) {
+				core.debug(`Removing labels from discussion: ${labelsToRemove.join(", ")}`);
+				try {
+					// First get label IDs
+					const labelQuery = `
+						query($owner: String!, $name: String!, $labels: [String!]!) {
+							repository(owner: $owner, name: $name) {
+								labels(first: 100, query: $labels) {
+									nodes {
+										id
+										name
+									}
+								}
+							}
+						}
+					`;
+
+					const labelData: any = await this.client.graphql(labelQuery, {
+						owner: this.owner,
+						name: this.repo,
+						labels: labelsToRemove.join(" "),
+					});
+
+					const labelIds = labelData.repository.labels.nodes
+						.filter((l: any) => labelsToRemove.includes(l.name))
+						.map((l: any) => l.id);
+
+					if (labelIds.length > 0) {
+						const mutation = `
+							mutation($discussionId: ID!, $labelIds: [ID!]!) {
+								removeLabelsFromLabelable(input: {labelableId: $discussionId, labelIds: $labelIds}) {
+									labelable {
+										... on Discussion {
+											id
+										}
+									}
+								}
+							}
+						`;
+
+						await this.client.graphql(mutation, {
+							discussionId: threadData.node_id,
+							labelIds,
+						});
+					}
+				} catch (error) {
+					core.warning(`Failed to remove labels from discussion: ${error}`);
+				}
+			}
+		}
+
+		// Handle category change
+		if (discussionActions.category) {
+			core.debug(`Changing discussion category to: ${discussionActions.category}`);
+			try {
+				// First get category ID
+				const categoryQuery = `
+					query($owner: String!, $name: String!) {
+						repository(owner: $owner, name: $name) {
+							discussionCategories(first: 100) {
+								nodes {
+									id
+									name
+								}
+							}
+						}
+					}
+				`;
+
+				const categoryData: any = await this.client.graphql(categoryQuery, {
+					owner: this.owner,
+					name: this.repo,
+				});
+
+				const category = categoryData.repository.discussionCategories.nodes.find(
+					(c: any) => c.name === discussionActions.category,
+				);
+
+				if (category) {
+					const mutation = `
+						mutation($discussionId: ID!, $categoryId: ID!) {
+							updateDiscussion(input: {discussionId: $discussionId, categoryId: $categoryId}) {
+								discussion {
+									id
+								}
+							}
+						}
+					`;
+
+					await this.client.graphql(mutation, {
+						discussionId: threadData.node_id,
+						categoryId: category.id,
+					});
+				} else {
+					core.warning(
+						`Category "${discussionActions.category}" not found in repository`,
+					);
+				}
+			} catch (error) {
+				core.warning(`Failed to change discussion category: ${error}`);
+			}
+		}
+
+		// Handle close
+		if (discussionActions.close) {
+			core.debug("Closing discussion");
+			try {
+				const mutation = `
+					mutation($discussionId: ID!, $reason: DiscussionCloseReason) {
+						closeDiscussion(input: {discussionId: $discussionId, reason: $reason}) {
+							discussion {
+								id
+							}
+						}
+					}
+				`;
+
+				// Map close_reason to GraphQL enum values
+				const reason =
+					discussionActions.close_reason === "outdated"
+						? "OUTDATED"
+						: discussionActions.close_reason === "duplicate"
+							? "DUPLICATE"
+							: discussionActions.close_reason === "resolved"
+								? "RESOLVED"
+								: null;
+
+				await this.client.graphql(mutation, {
+					discussionId: threadData.node_id,
+					reason,
+				});
+			} catch (error) {
+				core.warning(`Failed to close discussion: ${error}`);
+			}
+		}
+
+		// Handle create_issue
+		if (discussionActions.create_issue) {
+			core.debug("Creating issue from discussion");
+			try {
+				await this.client.rest.issues.create({
+					owner: this.owner,
+					repo: this.repo,
+					title: threadData.title,
+					body: `Created from discussion: ${threadData.html_url || ""}\n\n${threadData.body || ""}`,
+				});
+			} catch (error) {
+				core.warning(`Failed to create issue from discussion: ${error}`);
+			}
 		}
 	}
 }

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, jest } from "@jest/globals";
-import { RegexHandler } from "../../src/handlers/regexHandler";
-import type Config from "../../src/models/config";
-import type GHActionConfig from "../../src/models/ghActionConfig";
+import { RegexHandler } from "@/handlers/regexHandler";
+import type Config from "@/models/config";
+import type GHActionConfig from "@/models/ghActionConfig";
 
 // Mock dependencies
 jest.mock("@actions/core");

@@ -61,7 +61,7 @@ export class IssueHandler extends AbstractHandler {
 			const labelsToAdd = Array.isArray(issueActions.labels.add)
 				? issueActions.labels.add
 				: Object.keys(issueActions.labels.add);
-			const currentLabels = threadData.labels.map((label) => label.name);
+			const currentLabels = threadData.labels?.map((label) => label.name) || [];
 			const newLabels = _.difference(labelsToAdd, currentLabels);
 
 			if (newLabels.length) {
@@ -78,7 +78,7 @@ export class IssueHandler extends AbstractHandler {
 			const labelsToRemove = Array.isArray(issueActions.labels.remove)
 				? issueActions.labels.remove
 				: Object.keys(issueActions.labels.remove);
-			const currentLabels = threadData.labels.map((label) => label.name);
+			const currentLabels = threadData.labels?.map((label) => label.name) || [];
 			const removedLabels = _.intersection(currentLabels, labelsToRemove);
 
 			for (const label of removedLabels) {

@@ -54,9 +54,7 @@ export abstract class AbstractHandler implements BaseHandler {
 		event: string,
 		threadType: ThreadType,
 	): Promise<Actions | undefined> {
-		if (event === "unlabeled") {
-			label = `-${label}`;
-		}
+		const labelName = event === "unlabeled" ? `-${label}` : label;
 		const threadKey =
 			threadType === "issue"
 				? "issues"
@@ -71,8 +69,8 @@ export abstract class AbstractHandler implements BaseHandler {
 		}
 
 		// Determine if we're adding or removing a label
-		const isRemoval = label.startsWith("-");
-		const cleanLabel = isRemoval ? label.substring(1) : label;
+		const isRemoval = labelName.startsWith("-");
+		const cleanLabel = isRemoval ? labelName.substring(1) : labelName;
 		
 		// Get the appropriate label config
 		let labelConfig: Actions | undefined;
@@ -121,7 +119,7 @@ export abstract class AbstractHandler implements BaseHandler {
 		action: () => Promise<void>,
 	): Promise<void> {
 		if (lock.active) {
-			if (!lock.hasOwnProperty("reason")) {
+			if (!("reason" in lock)) {
 				const { data: issueData } = await this.client.rest.issues.get({
 					...issue,
 					headers: {
@@ -139,16 +137,16 @@ export abstract class AbstractHandler implements BaseHandler {
 				actionError = err;
 			}
 
-			if (lock.reason) {
-				issue = {
-					...issue,
-					lock_reason: lock.reason!,
-					headers: {
-						Accept: "application/vnd.github.sailor-v-preview+json",
-					},
-				};
-			}
-			await this.client.rest.issues.lock(issue);
+			const lockParams = lock.reason
+				? {
+						...issue,
+						lock_reason: lock.reason,
+						headers: {
+							Accept: "application/vnd.github.sailor-v-preview+json",
+						},
+					}
+				: issue;
+			await this.client.rest.issues.lock(lockParams);
 
 			if (actionError) {
 				throw actionError;
