@@ -139,10 +139,15 @@ Handle these GitHub webhook events:
 
 ### Import Guidelines
 
-- **Absolute Imports**: Use `@/` alias for all src imports
+- **Absolute Imports**: ALWAYS use `@/` alias for all src imports - never use relative imports like `./` or `../`
   ```typescript
   import { IssueHandler } from "@/handlers/issueHandler";
-  import type Config from "@/models/config";
+  import type Config from "@/models/internal/config";
+  import type { Issue } from "@/models/github";
+  
+  // ❌ NEVER do this
+  import { IssueHandler } from "./handlers/issueHandler";
+  import Config from "../models/config";
   ```
 - **Type Imports**: Prefer `import type` for type-only imports
 - **Node Built-ins**: Use `node:` prefix (e.g., `import * as fs from "node:fs"`)
