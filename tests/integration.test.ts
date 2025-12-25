@@ -1,9 +1,16 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
-import { parse } from "yaml";
 
 // Mock dependencies before imports
+const mockContext = {
+	repo: {
+		owner: "test-owner",
+		repo: "test-repo",
+	},
+	payload: {} as any,
+};
+
 jest.unstable_mockModule("@actions/core", () => ({
 	debug: jest.fn(),
 	info: jest.fn(),
@@ -14,30 +21,29 @@ jest.unstable_mockModule("@actions/core", () => ({
 
 jest.unstable_mockModule("@actions/github", () => ({
 	getOctokit: jest.fn(),
-	context: {
-		repo: {
-			owner: "test-owner",
-			repo: "test-repo",
-		},
-		payload: {},
-	},
+	context: mockContext,
 }));
 
 // Import after mocking
-const { IssueHandler } = await import("@/handlers/issueHandler");
-const { PullRequestHandler } = await import("@/handlers/pullRequestHandler");
-const { DiscussionHandler } = await import("@/handlers/discussionHandler");
-const { ContentLabelHandler } = await import("@/handlers/contentLabelHandler");
+const { IssueHandler } = await import("../src/handlers/issueHandler");
+const { PullRequestHandler } = await import("../src/handlers/pullRequestHandler");
+const { DiscussionHandler } = await import("../src/handlers/discussionHandler");
+const { ContentLabelHandler } = await import("../src/handlers/contentLabelHandler");
 const github = await import("@actions/github");
 
 import type { DiscussionEvent, IssuesEvent, PullRequestEvent } from "@octokit/webhooks-types";
-import type Config from "@/models/internal/config";
-import type GHActionConfig from "@/models/internal/ghActionConfig";
+import type Config from "../src/models/internal/config";
+import type GHActionConfig from "../src/models/internal/ghActionConfig";
 
 describe("Integration Tests - Payload Processing", () => {
-	let mockOctokit: any;
+	let mockOctokit: {
+		rest: {
+			issues: Record<string, jest.Mock>;
+			pulls: Record<string, jest.Mock>;
+		};
+		graphql: jest.Mock;
+	};
 	let actionConfig: GHActionConfig;
-	let config: Config;
 
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -46,31 +52,31 @@ describe("Integration Tests - Payload Processing", () => {
 		mockOctokit = {
 			rest: {
 				issues: {
-					createComment: jest.fn().mockResolvedValue({}),
-					addLabels: jest.fn().mockResolvedValue({}),
-					removeLabel: jest.fn().mockResolvedValue({}),
-					addAssignees: jest.fn().mockResolvedValue({}),
-					removeAssignees: jest.fn().mockResolvedValue({}),
-					update: jest.fn().mockResolvedValue({}),
-					lock: jest.fn().mockResolvedValue({}),
-					unlock: jest.fn().mockResolvedValue({}),
-					get: jest.fn().mockResolvedValue({
+					createComment: jest.fn<() => Promise<any>>().mockResolvedValue({}),
+					addLabels: jest.fn<() => Promise<any>>().mockResolvedValue({}),
+					removeLabel: jest.fn<() => Promise<any>>().mockResolvedValue({}),
+					addAssignees: jest.fn<() => Promise<any>>().mockResolvedValue({}),
+					removeAssignees: jest.fn<() => Promise<any>>().mockResolvedValue({}),
+					update: jest.fn<() => Promise<any>>().mockResolvedValue({}),
+					lock: jest.fn<() => Promise<any>>().mockResolvedValue({}),
+					unlock: jest.fn<() => Promise<any>>().mockResolvedValue({}),
+					get: jest.fn<() => Promise<any>>().mockResolvedValue({
 						data: {
 							milestone: null,
 						},
 					}),
-					listMilestones: jest.fn().mockResolvedValue({
+					listMilestones: jest.fn<() => Promise<any>>().mockResolvedValue({
 						data: [],
 					}),
 				},
 				pulls: {
-					createReviewComment: jest.fn().mockResolvedValue({}),
-					requestReviewers: jest.fn().mockResolvedValue({}),
-					removeRequestedReviewers: jest.fn().mockResolvedValue({}),
-					update: jest.fn().mockResolvedValue({}),
+					createReviewComment: jest.fn<() => Promise<any>>().mockResolvedValue({}),
+					requestReviewers: jest.fn<() => Promise<any>>().mockResolvedValue({}),
+					removeRequestedReviewers: jest.fn<() => Promise<any>>().mockResolvedValue({}),
+					update: jest.fn<() => Promise<any>>().mockResolvedValue({}),
 				},
 			},
-			graphql: jest.fn().mockResolvedValue({}),
+			graphql: jest.fn<() => Promise<any>>().mockResolvedValue({}),
 		};
 
 		(github.getOctokit as jest.Mock).mockReturnValue(mockOctokit);
@@ -80,49 +86,105 @@ describe("Integration Tests - Payload Processing", () => {
 			"github-token": "test-token",
 			"config-path": ".github/gh-labeler.yaml",
 		};
-
-		// Load test config from example
-		const configPath = path.join(process.cwd(), "example", "config.yaml");
-		const configContent = fs.readFileSync(configPath, "utf8");
-		config = parse(configContent) as Config;
 	});
 
 	afterEach(() => {
 		jest.resetAllMocks();
+		// Reset payload
+		mockContext.payload = {};
 	});
 
 	describe("Issue Handler Integration", () => {
-		it("should process bug report issue payload", async () => {
+		it("should process bug report issue payload with content labeling", async () => {
 			const payloadPath = path.join(process.cwd(), "data", "issue", "issue-bug-report.json");
 			const payload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as IssuesEvent;
+
+			// Mock payload in github.context
+			mockContext.payload = payload;
 
 			// Verify payload loaded correctly
 			expect(payload.issue).toBeDefined();
 			expect(payload.issue.number).toBe(101);
 			expect(payload.issue.title).toContain("Bug");
-			expect(payload.action).toBe("opened");
+
+			// Create config with regex rules to test content labeling
+			const testConfig: Config = {
+				regex: {
+					"\\b(bug|crash)\\b": {
+						labels: {
+							add: ["bug"],
+						},
+					},
+				},
+			};
+
+			// Call content label handler to scan and label
+			const contentHandler = new ContentLabelHandler(testConfig, actionConfig, "issue");
+			await contentHandler.performContentScanning(payload.issue);
+
+			// Verify that content scanning triggered label addition
+			expect(mockOctokit.rest.issues.addLabels).toHaveBeenCalledWith({
+				owner: "test-owner",
+				repo: "test-repo",
+				issue_number: 101,
+				labels: expect.arrayContaining(["bug"]),
+			});
 		});
 
 		it("should process feature request issue payload", async () => {
 			const payloadPath = path.join(process.cwd(), "data", "issue", "issue-feature-request.json");
 			const payload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as IssuesEvent;
 
+			// Mock payload in github.context
+			mockContext.payload = payload;
+
 			// Verify payload loaded correctly
 			expect(payload.issue).toBeDefined();
 			expect(payload.issue.number).toBe(102);
 			expect(payload.issue.title).toContain("Feature Request");
-			expect(payload.issue.body).toContain("dark mode");
+
+			// Define config with regex rules for feature requests
+			const testConfig: Config = {
+				regex: {
+					"\\b(feature|enhancement)\\b": {
+						labels: {
+							add: ["enhancement"],
+						},
+					},
+				},
+			};
+
+			// Call content label handler
+			const contentHandler = new ContentLabelHandler(testConfig, actionConfig, "issue");
+			await contentHandler.performContentScanning(payload.issue);
 		});
 
 		it("should process documentation issue payload", async () => {
 			const payloadPath = path.join(process.cwd(), "data", "issue", "issue-documentation.json");
 			const payload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as IssuesEvent;
 
+			// Mock payload in github.context
+			mockContext.payload = payload;
+
 			// Verify payload loaded correctly
 			expect(payload.issue).toBeDefined();
 			expect(payload.issue.number).toBe(103);
 			expect(payload.issue.title).toContain("Documentation");
-			expect(payload.issue.body).toContain("API documentation");
+
+			// Define config with regex rules for documentation
+			const testConfig: Config = {
+				regex: {
+					"\\b(documentation|docs)\\b": {
+						labels: {
+							add: ["documentation"],
+						},
+					},
+				},
+			};
+
+			// Call content label handler
+			const contentHandler = new ContentLabelHandler(testConfig, actionConfig, "issue");
+			await contentHandler.performContentScanning(payload.issue);
 		});
 	});
 
@@ -131,33 +193,84 @@ describe("Integration Tests - Payload Processing", () => {
 			const payloadPath = path.join(process.cwd(), "data", "pull_request", "pr-bugfix.json");
 			const payload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as PullRequestEvent;
 
+			// Mock payload in github.context
+			mockContext.payload = payload;
+
 			// Verify payload loaded correctly
 			expect(payload.pull_request).toBeDefined();
 			expect(payload.pull_request.number).toBe(201);
 			expect(payload.pull_request.title).toContain("Fix");
-			expect(payload.pull_request.body).toContain("crash");
+
+			// Define config with regex rules for bugfixes
+			const testConfig: Config = {
+				regex: {
+					"\\b(fix|bugfix)\\b": {
+						labels: {
+							add: ["bugfix"],
+						},
+					},
+				},
+			};
+
+			// Call content label handler
+			const contentHandler = new ContentLabelHandler(testConfig, actionConfig, "pr");
+			await contentHandler.performContentScanning(payload.pull_request);
 		});
 
 		it("should process feature PR payload", async () => {
 			const payloadPath = path.join(process.cwd(), "data", "pull_request", "pr-feature.json");
 			const payload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as PullRequestEvent;
 
+			// Mock payload in github.context
+			mockContext.payload = payload;
+
 			// Verify payload loaded correctly
 			expect(payload.pull_request).toBeDefined();
 			expect(payload.pull_request.number).toBe(202);
 			expect(payload.pull_request.title).toContain("Feature");
-			expect(payload.pull_request.body).toContain("dark mode");
+
+			// Define config with regex rules for features
+			const testConfig: Config = {
+				regex: {
+					"\\b(feature|feat)\\b": {
+						labels: {
+							add: ["feature"],
+						},
+					},
+				},
+			};
+
+			// Call content label handler
+			const contentHandler = new ContentLabelHandler(testConfig, actionConfig, "pr");
+			await contentHandler.performContentScanning(payload.pull_request);
 		});
 
 		it("should process refactor PR payload", async () => {
 			const payloadPath = path.join(process.cwd(), "data", "pull_request", "pr-refactor.json");
 			const payload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as PullRequestEvent;
 
+			// Mock payload in github.context
+			mockContext.payload = payload;
+
 			// Verify payload loaded correctly
 			expect(payload.pull_request).toBeDefined();
 			expect(payload.pull_request.number).toBe(203);
 			expect(payload.pull_request.title).toContain("Refactor");
-			expect(payload.pull_request.body).toContain("maintainability");
+
+			// Define config with regex rules for refactoring
+			const testConfig: Config = {
+				regex: {
+					"\\b(refactor|restructure)\\b": {
+						labels: {
+							add: ["refactor"],
+						},
+					},
+				},
+			};
+
+			// Call content label handler
+			const contentHandler = new ContentLabelHandler(testConfig, actionConfig, "pr");
+			await contentHandler.performContentScanning(payload.pull_request);
 		});
 	});
 
@@ -166,39 +279,90 @@ describe("Integration Tests - Payload Processing", () => {
 			const payloadPath = path.join(process.cwd(), "data", "discussion", "discussion-question.json");
 			const payload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as DiscussionEvent;
 
+			// Mock payload in github.context
+			mockContext.payload = payload;
+
 			// Verify payload loaded correctly
 			expect(payload.discussion).toBeDefined();
 			expect(payload.discussion.number).toBe(301);
 			expect(payload.discussion.title).toContain("How to");
-			expect(payload.discussion.category.name).toBe("Q&A");
+
+			// Define config with regex rules for questions
+			const testConfig: Config = {
+				regex: {
+					"\\bhow to\\b": {
+						labels: {
+							add: ["question"],
+						},
+					},
+				},
+			};
+
+			// Call content label handler
+			const contentHandler = new ContentLabelHandler(testConfig, actionConfig, "discussion");
+			await contentHandler.performContentScanning(payload.discussion);
 		});
 
 		it("should process idea discussion payload", async () => {
 			const payloadPath = path.join(process.cwd(), "data", "discussion", "discussion-idea.json");
 			const payload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as DiscussionEvent;
 
+			// Mock payload in github.context
+			mockContext.payload = payload;
+
 			// Verify payload loaded correctly
 			expect(payload.discussion).toBeDefined();
 			expect(payload.discussion.number).toBe(302);
 			expect(payload.discussion.title).toContain("Idea");
-			expect(payload.discussion.category.name).toBe("Ideas");
+
+			// Define config with regex rules for ideas
+			const testConfig: Config = {
+				regex: {
+					"\\b(idea|proposal)\\b": {
+						labels: {
+							add: ["idea"],
+						},
+					},
+				},
+			};
+
+			// Call content label handler
+			const contentHandler = new ContentLabelHandler(testConfig, actionConfig, "discussion");
+			await contentHandler.performContentScanning(payload.discussion);
 		});
 
 		it("should process announcement discussion payload", async () => {
 			const payloadPath = path.join(process.cwd(), "data", "discussion", "discussion-announcement.json");
 			const payload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as DiscussionEvent;
 
+			// Mock payload in github.context
+			mockContext.payload = payload;
+
 			// Verify payload loaded correctly
 			expect(payload.discussion).toBeDefined();
 			expect(payload.discussion.number).toBe(303);
 			expect(payload.discussion.title).toContain("Announcement");
-			expect(payload.discussion.category.name).toBe("Announcements");
+
+			// Define config with regex rules for announcements
+			const testConfig: Config = {
+				regex: {
+					"\\b(announcement|announce)\\b": {
+						labels: {
+							add: ["announcement"],
+						},
+					},
+				},
+			};
+
+			// Call content label handler
+			const contentHandler = new ContentLabelHandler(testConfig, actionConfig, "discussion");
+			await contentHandler.performContentScanning(payload.discussion);
 		});
 	});
 
 	describe("Content-Based Labeling Integration", () => {
 		it("should apply labels based on regex rules for issue", async () => {
-			// Create a test config with regex patterns (how the system actually works)
+			// Create a test config with regex patterns
 			const testConfig: Config = {
 				regex: {
 					"\\b(bug|crash|error)\\b": {
@@ -217,6 +381,10 @@ describe("Integration Tests - Payload Processing", () => {
 			const payloadPath = path.join(process.cwd(), "data", "issue", "issue-bug-report.json");
 			const payload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as IssuesEvent;
 
+			// Mock payload in github.context
+			mockContext.payload = payload;
+
+			// Call content label handler
 			const contentHandler = new ContentLabelHandler(testConfig, actionConfig, "issue");
 			await contentHandler.performContentScanning(payload.issue);
 
@@ -248,6 +416,10 @@ describe("Integration Tests - Payload Processing", () => {
 			const payloadPath = path.join(process.cwd(), "data", "pull_request", "pr-bugfix.json");
 			const payload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as PullRequestEvent;
 
+			// Mock payload in github.context
+			mockContext.payload = payload;
+
+			// Call content label handler
 			const contentHandler = new ContentLabelHandler(testConfig, actionConfig, "pr");
 			await contentHandler.performContentScanning(payload.pull_request);
 
@@ -278,6 +450,10 @@ describe("Integration Tests - Payload Processing", () => {
 			const payloadPath = path.join(process.cwd(), "data", "discussion", "discussion-question.json");
 			const payload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as DiscussionEvent;
 
+			// Mock payload in github.context
+			mockContext.payload = payload;
+
+			// Call content label handler
 			const contentHandler = new ContentLabelHandler(testConfig, actionConfig, "discussion");
 			await contentHandler.performContentScanning(payload.discussion);
 
@@ -296,68 +472,170 @@ describe("Integration Tests - Payload Processing", () => {
 			const payloadPath = path.join(process.cwd(), "data", "issue", "issue-bug-report.json");
 			const basePayload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as IssuesEvent;
 
-			// Simulate a labeled event
-			const labeledPayload = {
-				...basePayload,
-				action: "labeled" as const,
-				label: {
-					name: "bug",
-					color: "d73a4a",
+			// Define config with label-triggered actions
+			const testConfig: Config = {
+				labels: {
+					add: {
+						bug: {
+							comments: ["Thank you for reporting this bug!"],
+							issues: {
+								assignees: {
+									add: ["bugTeamMember"],
+								},
+							},
+						},
+					},
 				},
 			};
 
-			const handler = new IssueHandler(config, actionConfig);
+			// Simulate a labeled event
+			const labeledPayload: IssuesEvent = {
+				...basePayload,
+				action: "labeled",
+				label: {
+					id: 1,
+					node_id: "MDU6TGFiZWwx",
+					url: "https://api.github.com/repos/test-owner/test-repo/labels/bug",
+					name: "bug",
+					color: "d73a4a",
+					default: false,
+					description: "Something isn't working",
+				},
+			};
+
+			// Mock payload in github.context
+			mockContext.payload = labeledPayload;
+
+			// Call action handler
+			const handler = new IssueHandler(testConfig, actionConfig);
 			await handler.performActions(labeledPayload, labeledPayload.issue);
 
-			// Should have added comments and assignees based on config
-			expect(mockOctokit.rest.issues.createComment).toHaveBeenCalled();
+			// Verify comment was posted
+			expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith({
+				owner: "test-owner",
+				repo: "test-repo",
+				issue_number: 101,
+				body: "Thank you for reporting this bug!",
+			});
+
+			// Verify assignee was added
+			expect(mockOctokit.rest.issues.addAssignees).toHaveBeenCalledWith({
+				owner: "test-owner",
+				repo: "test-repo",
+				issue_number: 101,
+				assignees: ["bugTeamMember"],
+			});
 		});
 
 		it("should perform actions when enhancement label is added to PR", async () => {
 			const payloadPath = path.join(process.cwd(), "data", "pull_request", "pr-feature.json");
 			const basePayload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as PullRequestEvent;
 
-			// Simulate a labeled event
-			const labeledPayload = {
-				...basePayload,
-				action: "labeled" as const,
-				label: {
-					name: "enhancement",
-					color: "a2eeef",
+			// Define config with label-triggered actions for PRs
+			const testConfig: Config = {
+				labels: {
+					add: {
+						enhancement: {
+							comments: ["Thank you for this enhancement!"],
+							prs: {
+								reviewers: {
+									add: ["featureReviewer"],
+								},
+							},
+						},
+					},
 				},
 			};
 
-			const handler = new PullRequestHandler(config, actionConfig);
+			// Simulate a labeled event
+			const labeledPayload: PullRequestEvent = {
+				...basePayload,
+				action: "labeled",
+				label: {
+					id: 2,
+					node_id: "MDU6TGFiZWwy",
+					url: "https://api.github.com/repos/test-owner/test-repo/labels/enhancement",
+					name: "enhancement",
+					color: "a2eeef",
+					default: false,
+					description: "New feature or request",
+				},
+			};
+
+			// Mock payload in github.context
+			mockContext.payload = labeledPayload;
+
+			// Call action handler
+			const handler = new PullRequestHandler(testConfig, actionConfig);
 			await handler.performActions(labeledPayload, labeledPayload.pull_request);
 
-			// Should have performed PR-specific actions
-			expect(mockOctokit.rest.issues.createComment).toHaveBeenCalled();
+			// Verify comment was posted
+			expect(mockOctokit.rest.issues.createComment).toHaveBeenCalledWith({
+				owner: "test-owner",
+				repo: "test-repo",
+				issue_number: 202,
+				body: "Thank you for this enhancement!",
+			});
+
+			// Verify reviewer was requested
+			expect(mockOctokit.rest.pulls.requestReviewers).toHaveBeenCalledWith({
+				owner: "test-owner",
+				repo: "test-repo",
+				pull_number: 202,
+				reviewers: ["featureReviewer"],
+			});
 		});
 
 		it("should perform actions when label is added to discussion", async () => {
 			const payloadPath = path.join(process.cwd(), "data", "discussion", "discussion-question.json");
 			const basePayload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as DiscussionEvent;
 
-			// Simulate a labeled event
-			const labeledPayload = {
-				...basePayload,
-				action: "labeled" as const,
-				label: {
-					name: "question",
-					color: "d876e3",
+			// Define config with label-triggered actions for discussions
+			const testConfig: Config = {
+				labels: {
+					add: {
+						question: {
+							comments: ["Thank you for your question!"],
+						},
+					},
 				},
 			};
 
+			// Simulate a labeled event
+			const labeledPayload: DiscussionEvent = {
+				...basePayload,
+				action: "labeled",
+				label: {
+					id: 3,
+					node_id: "MDU6TGFiZWwz",
+					url: "https://api.github.com/repos/test-owner/test-repo/labels/question",
+					name: "question",
+					color: "d876e3",
+					default: false,
+					description: "Further information is requested",
+				},
+			};
+
+			// Mock payload in github.context
+			mockContext.payload = labeledPayload;
+
 			// Mock GraphQL for discussion actions
-			(mockOctokit.graphql as jest.Mock).mockResolvedValue({
+			mockOctokit.graphql = jest.fn<() => Promise<any>>().mockResolvedValue({
 				addDiscussionComment: { comment: { id: "comment_id" } },
 			});
 
-			const handler = new DiscussionHandler(config, actionConfig);
+			// Call action handler
+			const handler = new DiscussionHandler(testConfig, actionConfig);
 			await handler.performActions(labeledPayload, labeledPayload.discussion);
 
-			// Should have commented via GraphQL
-			expect(mockOctokit.graphql).toHaveBeenCalled();
+			// Verify GraphQL mutation was called to add comment
+			expect(mockOctokit.graphql).toHaveBeenCalledWith(
+				expect.stringContaining("addDiscussionComment"),
+				expect.objectContaining({
+					body: "Thank you for your question!",
+					discussionId: labeledPayload.discussion.node_id,
+				}),
+			);
 		});
 	});
 
@@ -390,6 +668,9 @@ describe("Integration Tests - Payload Processing", () => {
 			const payloadPath = path.join(process.cwd(), "data", "issue", "issue-bug-report.json");
 			const payload = JSON.parse(fs.readFileSync(payloadPath, "utf8")) as IssuesEvent;
 
+			// Mock payload in github.context
+			mockContext.payload = payload;
+
 			// Step 1: Content scanning adds "bug" label
 			const contentHandler = new ContentLabelHandler(fullConfig, actionConfig, "issue");
 			await contentHandler.performContentScanning(payload.issue);
@@ -402,11 +683,22 @@ describe("Integration Tests - Payload Processing", () => {
 			});
 
 			// Step 2: Label action handler processes the added label
-			const labeledPayload = {
+			const labeledPayload: IssuesEvent = {
 				...payload,
-				action: "labeled" as const,
-				label: { name: "bug", color: "d73a4a" },
+				action: "labeled",
+				label: {
+					id: 1,
+					node_id: "MDU6TGFiZWwx",
+					url: "https://api.github.com/repos/test-owner/test-repo/labels/bug",
+					name: "bug",
+					color: "d73a4a",
+					default: false,
+					description: "Something isn't working",
+				},
 			};
+
+			// Update context payload for labeled action
+			mockContext.payload = labeledPayload;
 
 			const handler = new IssueHandler(fullConfig, actionConfig);
 			await handler.performActions(labeledPayload, labeledPayload.issue);

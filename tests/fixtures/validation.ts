@@ -38,12 +38,12 @@ export const mockValidationError = {
 };
 
 // Create a smart mock that applies schema defaults
-export const mockSchemaValidate = jest.fn((input: any, _options?: any) => {
+export const mockSchemaValidate = jest.fn((input: Record<string, unknown>, _options?: { abortEarly?: boolean }) => {
 	// Apply schema defaults for undefined/empty values
 	const result = {
 		...input,
 		"config-path": input["config-path"] || ".github/gh-labeler.yaml",
-		process: input.process && input.process.length > 0 ? input.process : ["issue", "pr", "discussion"],
+		process: Array.isArray(input.process) && input.process.length > 0 ? input.process : ["issue", "pr", "discussion"],
 	};
 
 	return {

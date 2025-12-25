@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 // Mock dependencies
 jest.unstable_mockModule("@actions/core", () => ({
@@ -22,11 +22,17 @@ jest.unstable_mockModule("@actions/github", () => ({
 const { IssueHandler } = await import("../src/handlers/issueHandler");
 const core = await import("@actions/core");
 const github = await import("@actions/github");
+
 import type Config from "../src/models/config";
 import type GHActionConfig from "../src/models/ghActionConfig";
 
 describe("IssueHandler", () => {
-	let mockOctokit: any;
+	let mockOctokit: {
+		rest: {
+			issues: Record<string, jest.Mock>;
+		};
+		graphql: jest.Mock;
+	};
 	let actionConfig: GHActionConfig;
 
 	beforeEach(() => {

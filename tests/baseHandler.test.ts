@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 // Mock dependencies BEFORE importing
 jest.unstable_mockModule("@actions/core", () => ({
@@ -31,6 +31,8 @@ jest.unstable_mockModule("@actions/github", () => ({
 // Now import after mocking
 const { AbstractHandler } = await import("../src/handlers/baseHandler");
 const github = await import("@actions/github");
+
+import type { WebhookPayload } from "@actions/github/lib/interfaces";
 import type Config from "../src/models/config";
 import type GHActionConfig from "../src/models/ghActionConfig";
 import type { ThreadType } from "../src/types/common";
@@ -41,13 +43,22 @@ class TestHandler extends AbstractHandler {
 		return "issue";
 	}
 
-	async performActions(_payload: any, _threadData: any): Promise<void> {
+	async performActions(
+		_payload: WebhookPayload,
+		_threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"],
+	): Promise<void> {
 		// Test implementation
 	}
 }
 
 describe("AbstractHandler / BaseHandler", () => {
-	let mockOctokit: any;
+	let mockOctokit: {
+		rest: {
+			issues: Record<string, jest.Mock>;
+			pulls: Record<string, jest.Mock>;
+		};
+		graphql: jest.Mock;
+	};
 	let mockConfig: Config;
 	let mockActionConfig: GHActionConfig;
 	let handler: TestHandler;

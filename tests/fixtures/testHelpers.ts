@@ -112,7 +112,7 @@ export const setupDefaultMocks = async () => {
 	(yaml.parse as jest.Mock).mockReturnValue(sampleConfig);
 
 	// Setup smart validation mock
-	validation.default.validate.mockImplementation((input: any) => {
+	validation.default.validate.mockImplementation((input: Record<string, unknown>) => {
 		return validation.mockSchemaValidate(input);
 	});
 
@@ -136,7 +136,7 @@ export const resetMocks = async () => {
 };
 
 // Test scenario generators
-export const createTestScenario = (type: "success" | "error", scenario: any) => {
+export const createTestScenario = (type: "success" | "error", scenario: Record<string, unknown>) => {
 	return {
 		...scenario,
 		type,
@@ -144,30 +144,43 @@ export const createTestScenario = (type: "success" | "error", scenario: any) => 
 };
 
 // Common expectations helpers
-export const expectValidationCalled = (validation: any, expectedConfig: any) => {
+export const expectValidationCalled = (
+	validation: { default: { validate: jest.Mock } },
+	expectedConfig: Record<string, unknown>,
+) => {
 	expect(validation.default.validate).toHaveBeenCalledWith(expectedConfig, {
 		abortEarly: false,
 	});
 };
 
-export const expectHandlerCalled = (handler: any, config: any, ...args: any[]) => {
+export const expectHandlerCalled = (handler: jest.Mock, config: Record<string, unknown>, ...args: unknown[]) => {
 	expect(handler).toHaveBeenCalledWith(config, ...args);
 };
 
-export const expectContentScanning = (handlers: any, issue: any) => {
+export const expectContentScanning = (
+	handlers: { mockContentLabelHandlerInstance: { performContentScanning: jest.Mock } },
+	issue: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"],
+) => {
 	expect(handlers.mockContentLabelHandlerInstance.performContentScanning).toHaveBeenCalledWith(issue);
 };
 
 export const expectLabelAction = (
-	handlers: any,
-	payload: any,
+	handlers: {
+		mockIssueHandlerInstance?: { performActions: jest.Mock };
+		mockPullRequestHandlerInstance?: { performActions: jest.Mock };
+		mockDiscussionHandlerInstance?: { performActions: jest.Mock };
+	},
+	payload: IssuesEvent | PullRequestEvent | DiscussionEvent,
 	threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"],
 ) => {
-	expect(handlers.mockIssueHandlerInstance.performActions).toHaveBeenCalledWith(payload, threadData);
+	expect(handlers.mockIssueHandlerInstance?.performActions).toHaveBeenCalledWith(payload, threadData);
 };
 
 // Error simulation helpers
-export const simulateFileSystemError = (fs: any, errorType: "permission" | "notfound" | "parse") => {
+export const simulateFileSystemError = (
+	fs: { existsSync: jest.Mock; readFileSync: jest.Mock },
+	errorType: "permission" | "notfound" | "parse",
+) => {
 	switch (errorType) {
 		case "permission":
 			fs.existsSync.mockReturnValue(true);
@@ -187,15 +200,27 @@ export const simulateFileSystemError = (fs: any, errorType: "permission" | "notf
 	}
 };
 
-export const simulateHandlerError = (handlers: any, errorType: "instantiation" | "execution", message: string) => {
+export const simulateHandlerError = (
+	handlers: {
+		IssueHandler?: jest.Mock;
+		PullRequestHandler?: jest.Mock;
+		DiscussionHandler?: jest.Mock;
+		ContentLabelHandler?: jest.Mock;
+		mockContentLabelHandlerInstance?: { performContentScanning: jest.Mock };
+	},
+	errorType: "instantiation" | "execution",
+	message: string,
+) => {
 	switch (errorType) {
 		case "instantiation":
-			handlers.ContentLabelHandler.mockImplementation(() => {
+			handlers.ContentLabelHandler?.mockImplementation(() => {
 				throw new Error(message);
 			});
 			break;
 		case "execution":
-			handlers.mockContentLabelHandlerInstance.performContentScanning.mockRejectedValueOnce(new Error(message));
+			handlers.mockContentLabelHandlerInstance?.performContentScanning.mockRejectedValueOnce(
+				new Error(message) as never,
+			);
 			break;
 	}
 };

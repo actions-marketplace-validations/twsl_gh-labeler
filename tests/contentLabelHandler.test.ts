@@ -34,7 +34,11 @@ import type Config from "../src/models/internal/config";
 import type GHActionConfig from "../src/models/internal/ghActionConfig";
 
 describe("ContentLabelHandler", () => {
-	let mockOctokit: any;
+	let mockOctokit: {
+		rest: {
+			issues: Record<string, jest.Mock>;
+		};
+	};
 	let mockConfig: Config;
 	let mockActionConfig: GHActionConfig;
 

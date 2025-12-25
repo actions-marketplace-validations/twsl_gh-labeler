@@ -1,4 +1,4 @@
-import { jest, describe, beforeEach, it, expect, afterEach } from "@jest/globals";
+import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 // Mock dependencies
 jest.unstable_mockModule("@actions/core", () => import("./fixtures/core"));
@@ -6,15 +6,19 @@ jest.unstable_mockModule("@actions/github", () => import("./fixtures/github"));
 
 const { IssueHandler } = await import("../src/handlers/issueHandler");
 const { PullRequestHandler } = await import("../src/handlers/pullRequestHandler");
-const { DiscussionHandler } = await import("../src/handlers/discussionHandler");
-const core = await import("./fixtures/core");
 const githubModule = await import("./fixtures/github");
-import type Config from "@/models/internal/config";
-import type GHActionConfig from "@/models/internal/ghActionConfig";
-import type { IssuesEvent, PullRequestEvent } from "@octokit/webhooks-types";
+
+import type Config from "../src/models/internal/config";
+import type GHActionConfig from "../src/models/internal/ghActionConfig";
 
 describe("Handler Actions with Config Inheritance", () => {
-	let mockOctokit: any;
+	let mockOctokit: {
+		rest: {
+			issues: Record<string, jest.Mock>;
+			pulls: Record<string, jest.Mock>;
+		};
+		graphql: jest.Mock;
+	};
 	let actionConfig: GHActionConfig;
 
 	beforeEach(() => {
@@ -220,12 +224,12 @@ describe("Handler Actions with Config Inheritance", () => {
 				},
 			};
 
-			mockOctokit.rest.issues.listMilestones.mockResolvedValue({
+			(mockOctokit.rest.issues.listMilestones as jest.Mock).mockResolvedValue({
 				data: [
 					{ number: 1, title: "v1.0" },
 					{ number: 2, title: "v2.0" },
 				],
-			});
+			} as never);
 
 			const handler = new IssueHandler(config, actionConfig);
 			const payload = {
