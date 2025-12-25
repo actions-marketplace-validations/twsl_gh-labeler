@@ -38,7 +38,7 @@ const validation = await import("./fixtures/validation");
 const { sampleConfig, configWithContentRules } = await import("./fixtures/config");
 const { createIssuePayload, createPullRequestPayload, createDiscussionPayload } = await import("./fixtures/payloads");
 const { setupDefaultMocks, resetMocks } = await import("./fixtures/testHelpers");
-const { createComplexIssuePayload, createComplexPRPayload, createComplexDiscussionPayload, createMalformedPayload } =
+const { createComplexIssuePayload, createComplexPRPayload, createComplexDiscussionPayload } =
 	await import("./fixtures/complexPayloads");
 const { configWithSpecialCharacters, largeConfig, configWithEmptyActions, configWithComplexActions } = await import(
 	"./fixtures/configScenarios"
@@ -124,7 +124,7 @@ describe("main.ts", () => {
 			it("should handle validation errors", async () => {
 				// Arrange
 				core.getInput.mockReturnValue("");
-				validation.default.validate.mockReturnValue(validation.mockValidationError);
+				validation.default.validate.mockReturnValueOnce(validation.mockValidationError as any);
 
 				// Act
 				await run();
@@ -157,9 +157,7 @@ describe("main.ts", () => {
 					},
 					value: undefined,
 				};
-				validation.default.validate.mockReturnValue(complexError);
-
-				// Act
+					validation.default.validate.mockReturnValueOnce(complexError as any);
 				await run();
 
 				// Assert

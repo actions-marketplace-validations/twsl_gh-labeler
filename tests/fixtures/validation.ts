@@ -1,5 +1,4 @@
 import { jest } from "@jest/globals";
-import type Joi from "joi";
 
 export const mockValidationSuccess = {
 	error: undefined,
@@ -37,7 +36,7 @@ export const mockValidationError = {
 };
 
 // Create a smart mock that applies schema defaults
-export const mockSchemaValidate = jest.fn((input: any) => {
+export const mockSchemaValidate = jest.fn((input: any, _options?: any) => {
 	// Apply schema defaults for undefined/empty values
 	const result = {
 		...input,
