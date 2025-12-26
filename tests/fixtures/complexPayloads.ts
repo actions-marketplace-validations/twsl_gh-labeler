@@ -1,5 +1,5 @@
 // Additional payload fixtures for comprehensive testing
-import type { IssuesEvent, PullRequestEvent, DiscussionEvent } from "@octokit/webhooks-types";
+import type { DiscussionEvent, IssuesEvent, PullRequestEvent } from "@octokit/webhooks-types";
 
 export const createComplexIssuePayload = (action: string, overrides: Record<string, unknown> = {}): IssuesEvent =>
 	({
