@@ -62,7 +62,8 @@ jobs:
         id: test-action
         uses: ./
         with:
-          milliseconds: 2000
+          config-path: "./example/config.yaml"
+          process: "issue, pr, discussion"
 
       - name: Print Output
         id: output
