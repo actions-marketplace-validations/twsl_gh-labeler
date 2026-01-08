@@ -26,6 +26,7 @@ export default {
 	testEnvironment: "node",
 	testMatch: ["**/*.test.ts"],
 	testPathIgnorePatterns: ["/dist/", "/node_modules/"],
+	watchPathIgnorePatterns: ["/node_modules/", "/dist/", "\\.pnpm"],
 	transform: {
 		"^.+\\.ts$": [
 			"ts-jest",
