@@ -49,6 +49,10 @@ jobs:
         id: pnpm-test
         run: pnpm run test
 
+      - name: Build
+        id: pnpm-build
+        run: pnpm run package
+
   test-action:
     name: GitHub Actions Test
     runs-on: ubuntu-latest
