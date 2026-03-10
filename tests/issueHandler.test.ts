@@ -553,9 +553,9 @@ describe("IssueHandler", () => {
 
 			mockOctokit.graphql.mockRejectedValue(new Error("Pin failed"));
 
-			await handler.performActions(payload, threadData);
+			await expect(handler.performActions(payload, threadData)).rejects.toThrow("Failed to pin issue: Pin failed");
 
-			expect(core.warning).toHaveBeenCalledWith(expect.stringContaining("Failed to pin issue"));
+			expect(core.setFailed).toHaveBeenCalledWith("Failed to pin issue: Pin failed");
 		});
 
 		it("should add milestone to issue", async () => {
@@ -600,7 +600,7 @@ describe("IssueHandler", () => {
 			});
 		});
 
-		it("should warn when milestone not found", async () => {
+		it("should fail when milestone is not found", async () => {
 			const config: Config = {
 				labels: {
 					add: {
@@ -628,9 +628,9 @@ describe("IssueHandler", () => {
 				labels: [],
 			} as any;
 
-			await handler.performActions(payload, threadData);
+			await expect(handler.performActions(payload, threadData)).rejects.toThrow('Milestone "Nonexistent" not found');
 
-			expect(core.warning).toHaveBeenCalledWith(expect.stringContaining('Milestone "Nonexistent" not found'));
+			expect(core.setFailed).toHaveBeenCalledWith('Milestone "Nonexistent" not found');
 		});
 
 		it("should remove milestone from issue", async () => {

@@ -15,6 +15,7 @@ jest.unstable_mockModule("@actions/github", () => ({
 				addLabels: jest.fn(),
 			},
 		},
+		graphql: jest.fn(),
 	})),
 	context: {
 		repo: {
@@ -51,6 +52,7 @@ describe("ContentLabelHandler", () => {
 					addLabels: jest.fn(),
 				},
 			},
+			graphql: jest.fn(),
 		};
 
 		(github.getOctokit as any).mockReturnValue(mockOctokit);
@@ -376,17 +378,36 @@ describe("ContentLabelHandler", () => {
 
 			const threadData = {
 				number: 5,
+				node_id: "discussion-node-id",
 				title: "I have a question about the API",
 				body: "How do I use this feature?",
 			};
 
+			mockOctokit.graphql
+				.mockResolvedValueOnce({
+					repository: {
+						labels: {
+							nodes: [{ id: "label-1", name: "Q&A" }],
+						},
+					},
+				})
+				.mockResolvedValueOnce({});
+
 			await handler.performContentScanning(threadData as any);
 
-			expect(mockOctokit.rest.issues.addLabels).toHaveBeenCalledWith({
-				owner: "test-owner",
-				repo: "test-repo",
-				issue_number: 5,
-				labels: ["Q&A"],
+			expect(mockOctokit.rest.issues.addLabels).not.toHaveBeenCalled();
+			expect(mockOctokit.graphql).toHaveBeenNthCalledWith(
+				1,
+				expect.stringContaining("query($owner: String!, $name: String!, $labels: String!)"),
+				{
+					owner: "test-owner",
+					name: "test-repo",
+					labels: "Q&A",
+				},
+			);
+			expect(mockOctokit.graphql).toHaveBeenNthCalledWith(2, expect.stringContaining("addLabelsToLabelable"), {
+				discussionId: "discussion-node-id",
+				labelIds: ["label-1"],
 			});
 		});
 

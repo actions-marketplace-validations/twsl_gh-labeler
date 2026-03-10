@@ -7,22 +7,18 @@ jest.unstable_mockModule("node:fs", () => import("./fixtures/fs"));
 jest.unstable_mockModule("yaml", () => ({
 	parse: jest.fn(),
 }));
-jest.unstable_mockModule("../src/handlers/issueHandler", async () => {
-	const handlers = await import("./fixtures/handlers");
-	return { IssueHandler: handlers.IssueHandler };
-});
-jest.unstable_mockModule("../src/handlers/pullRequestHandler", async () => {
-	const handlers = await import("./fixtures/handlers");
-	return { PullRequestHandler: handlers.PullRequestHandler };
-});
-jest.unstable_mockModule("../src/handlers/discussionHandler", async () => {
-	const handlers = await import("./fixtures/handlers");
-	return { DiscussionHandler: handlers.DiscussionHandler };
-});
-jest.unstable_mockModule("../src/handlers/contentLabelHandler", async () => {
-	const handlers = await import("./fixtures/handlers");
-	return { ContentLabelHandler: handlers.ContentLabelHandler };
-});
+jest.unstable_mockModule("../src/handlers/issueHandler", () =>
+	import("./fixtures/handlers").then((handlers) => ({ IssueHandler: handlers.IssueHandler })),
+);
+jest.unstable_mockModule("../src/handlers/pullRequestHandler", () =>
+	import("./fixtures/handlers").then((handlers) => ({ PullRequestHandler: handlers.PullRequestHandler })),
+);
+jest.unstable_mockModule("../src/handlers/discussionHandler", () =>
+	import("./fixtures/handlers").then((handlers) => ({ DiscussionHandler: handlers.DiscussionHandler })),
+);
+jest.unstable_mockModule("../src/handlers/contentLabelHandler", () =>
+	import("./fixtures/handlers").then((handlers) => ({ ContentLabelHandler: handlers.ContentLabelHandler })),
+);
 jest.unstable_mockModule("../src/schemas/ghActionConfig", () => import("./fixtures/validation"));
 
 // Import the main module AFTER setting up mocks

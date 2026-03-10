@@ -1,9 +1,20 @@
 import * as core from "@actions/core";
 import type { PullRequestEvent } from "@octokit/webhooks-types";
-import _ from "lodash";
-import { AbstractHandler } from "./baseHandler";
-import type { ThreadType } from "@/types/common";
 import type PRs from "@/models/internal/config/prs";
+import type { ThreadType } from "@/types/common";
+import { AbstractHandler } from "./baseHandler";
+
+function difference<T>(left: T[], right: T[]): T[] {
+	return left.filter((item) => !right.includes(item));
+}
+
+function intersection<T>(left: T[], right: T[]): T[] {
+	return left.filter((item) => right.includes(item));
+}
+
+function without<T>(items: T[], excluded: T): T[] {
+	return items.filter((item) => item !== excluded);
+}
 
 export class PullRequestHandler extends AbstractHandler {
 	getThreadType(): ThreadType {
@@ -52,7 +63,7 @@ export class PullRequestHandler extends AbstractHandler {
 				? prActions.labels.add
 				: Object.keys(prActions.labels.add);
 			const currentLabels = threadData.labels?.map((label) => label.name) || [];
-			const newLabels = _.difference(labelsToAdd, currentLabels);
+			const newLabels = difference(labelsToAdd, currentLabels);
 
 			if (newLabels.length) {
 				core.debug(`Adding labels to PR: ${newLabels.join(", ")}`);
@@ -69,7 +80,7 @@ export class PullRequestHandler extends AbstractHandler {
 				? prActions.labels.remove
 				: Object.keys(prActions.labels.remove);
 			const currentLabels = threadData.labels?.map((label) => label.name) || [];
-			const removedLabels = _.intersection(currentLabels, labelsToRemove);
+			const removedLabels = intersection(currentLabels, labelsToRemove);
 
 			for (const label of removedLabels) {
 				core.debug(`Removing label from PR: ${label}`);
@@ -84,7 +95,7 @@ export class PullRequestHandler extends AbstractHandler {
 		if (prActions.reviewers?.add && prActions.reviewers.add.length > 0) {
 			core.debug(`Adding reviewers to PR: ${prActions.reviewers.add.join(", ")}`);
 			const author = threadData.user?.login || "";
-			const reviewers = _.without(prActions.reviewers.add, author);
+			const reviewers = without(prActions.reviewers.add, author);
 
 			if (reviewers.length > 0) {
 				await this.addReviewers(reviewers, threadData.number);
@@ -144,7 +155,7 @@ export class PullRequestHandler extends AbstractHandler {
 				reviewers,
 			});
 		} catch (error) {
-			core.warning(`Failed to add reviewers: ${error}`);
+			this.failAction("Failed to add reviewers", error);
 		}
 	}
 
@@ -159,7 +170,7 @@ export class PullRequestHandler extends AbstractHandler {
 				reviewers,
 			});
 		} catch (error) {
-			core.warning(`Failed to remove reviewers: ${error}`);
+			this.failAction("Failed to remove reviewers", error);
 		}
 	}
 }

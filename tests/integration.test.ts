@@ -452,17 +452,33 @@ describe("Integration Tests - Payload Processing", () => {
 
 			// Mock payload in github.context
 			mockContext.payload = payload;
+			mockOctokit.graphql
+				.mockResolvedValueOnce({
+					repository: {
+						labels: {
+							nodes: [{ id: "label-question", name: "question" }],
+						},
+					},
+				})
+				.mockResolvedValueOnce({});
 
 			// Call content label handler
 			const contentHandler = new ContentLabelHandler(testConfig, actionConfig, "discussion");
 			await contentHandler.performContentScanning(payload.discussion);
 
-			// Discussions use regular issues API for labels
-			expect(mockOctokit.rest.issues.addLabels).toHaveBeenCalledWith({
-				owner: "test-owner",
-				repo: "test-repo",
-				issue_number: 301,
-				labels: expect.arrayContaining(["question"]),
+			expect(mockOctokit.rest.issues.addLabels).not.toHaveBeenCalled();
+			expect(mockOctokit.graphql).toHaveBeenNthCalledWith(
+				1,
+				expect.stringContaining("repository(owner: $owner, name: $name)"),
+				{
+					owner: "test-owner",
+					name: "test-repo",
+					labels: "question",
+				},
+			);
+			expect(mockOctokit.graphql).toHaveBeenNthCalledWith(2, expect.stringContaining("addLabelsToLabelable"), {
+				discussionId: payload.discussion.node_id,
+				labelIds: ["label-question"],
 			});
 		});
 	});

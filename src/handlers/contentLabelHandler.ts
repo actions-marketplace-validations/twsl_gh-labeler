@@ -1,5 +1,6 @@
 import * as core from "@actions/core";
 import type { DiscussionEvent, IssuesEvent, PullRequestEvent } from "@octokit/webhooks-types";
+import type Config from "@/models/internal/config";
 import type ContentRule from "@/models/internal/config/contentRule";
 import type GHActionConfig from "@/models/internal/ghActionConfig";
 import type { ThreadType } from "@/types/common";
@@ -12,7 +13,7 @@ export class ContentLabelHandler extends AbstractHandler {
 
 	private threadType: ThreadType;
 
-	constructor(config: any, actionConfig: GHActionConfig, threadType: ThreadType) {
+	constructor(config: Config, actionConfig: GHActionConfig, threadType: ThreadType) {
 		super(config, actionConfig);
 		this.threadType = threadType;
 	}
@@ -33,13 +34,22 @@ export class ContentLabelHandler extends AbstractHandler {
 
 		const currentLabels =
 			"labels" in threadData && threadData.labels
-				? threadData.labels.map((label: { name?: string | null }) => label.name)
+				? threadData.labels
+						.map((label: { name?: string | null }) => label.name)
+						.filter((labelName): labelName is string => Boolean(labelName))
 				: [];
 		const labelsToAdd: string[] = [];
 
 		for (const rule of contentRules) {
 			const flags = rule.caseSensitive ? "g" : "gi";
-			const regex = new RegExp(rule.pattern, flags);
+			let regex: RegExp;
+
+			try {
+				regex = new RegExp(rule.pattern, flags);
+			} catch (error) {
+				core.warning(`Skipping invalid regex pattern "${rule.pattern}": ${error}`);
+				continue;
+			}
 
 			if (regex.test(textToScan) && !currentLabels.includes(rule.label)) {
 				labelsToAdd.push(rule.label);
@@ -49,14 +59,64 @@ export class ContentLabelHandler extends AbstractHandler {
 		if (labelsToAdd.length > 0) {
 			core.info(`Adding content-based labels: ${labelsToAdd.join(", ")}`);
 
-			const issueParams = {
+			if (this.threadType === "discussion") {
+				const labelQuery = `
+					query($owner: String!, $name: String!, $labels: String!) {
+						repository(owner: $owner, name: $name) {
+							labels(first: 100, query: $labels) {
+								nodes {
+									id
+									name
+								}
+							}
+						}
+					}
+				`;
+
+				const labelData = (await this.client.graphql(labelQuery, {
+					owner: this.owner,
+					name: this.repo,
+					labels: labelsToAdd.join(" "),
+				})) as {
+					repository?: {
+						labels?: {
+							nodes?: Array<{ id: string; name: string }>;
+						};
+					};
+				};
+
+				const labelIds = (labelData.repository?.labels?.nodes || [])
+					.filter((label) => labelsToAdd.includes(label.name))
+					.map((label) => label.id);
+
+				if (labelIds.length === 0) {
+					core.warning(`No matching discussion labels were found for: ${labelsToAdd.join(", ")}`);
+					return;
+				}
+
+				const mutation = `
+					mutation($discussionId: ID!, $labelIds: [ID!]!) {
+						addLabelsToLabelable(input: {labelableId: $discussionId, labelIds: $labelIds}) {
+							labelable {
+								... on Discussion {
+									id
+								}
+							}
+						}
+					}
+				`;
+
+				await this.client.graphql(mutation, {
+					discussionId: threadData.node_id,
+					labelIds,
+				});
+				return;
+			}
+
+			await this.client.rest.issues.addLabels({
 				owner: this.owner,
 				repo: this.repo,
 				issue_number: threadData.number,
-			};
-
-			await this.client.rest.issues.addLabels({
-				...issueParams,
 				labels: labelsToAdd,
 			});
 		}

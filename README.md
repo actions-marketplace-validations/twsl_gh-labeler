@@ -1,44 +1,55 @@
-# Create a GitHub Action Using TypeScript
+# gh-labeler
 
-[![GitHub Super-Linter](https://github.com/actions/typescript-action/actions/workflows/linter.yml/badge.svg)](https://github.com/super-linter/super-linter)
-![CI](https://github.com/actions/typescript-action/actions/workflows/ci.yml/badge.svg)
-[![Check dist/](https://github.com/actions/typescript-action/actions/workflows/check-dist.yml/badge.svg)](https://github.com/actions/typescript-action/actions/workflows/check-dist.yml)
-[![CodeQL](https://github.com/actions/typescript-action/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/actions/typescript-action/actions/workflows/codeql-analysis.yml)
+[![GitHub Super-Linter](https://github.com/twsl/gh-labeler/actions/workflows/linter.yml/badge.svg)](https://github.com/super-linter/super-linter)
+![CI](https://github.com/twsl/gh-labeler/actions/workflows/ci.yml/badge.svg)
+[![Check dist/](https://github.com/twsl/gh-labeler/actions/workflows/check-dist.yml/badge.svg)](https://github.com/twsl/gh-labeler/actions/workflows/check-dist.yml)
+[![CodeQL](https://github.com/twsl/gh-labeler/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/twsl/gh-labeler/actions/workflows/codeql-analysis.yml)
 
+gh-labeler is a GitHub Action that applies labels and follow-up actions to
+issues, pull requests, and discussions based on label events and regex matches
+against the title and body.
 
-Based on:
-- https://github.com/toshimaru/label-actions
-- https://github.com/dessant/label-actions
+The action is configuration-driven. You define label rules and regex rules in
+`.github/gh-labeler.yaml`, and the action handles the matching GitHub API calls.
 
-Use this template to bootstrap the creation of a TypeScript action. :rocket:
+## What It Can Do
 
-This template includes compilation support, tests, a validation workflow,
-publishing, and versioning guidance.
+- Add and remove labels
+- Add and remove assignees
+- Request and remove pull request reviewers
+- Post comments on issues, pull requests, and discussions
+- Close issues, pull requests, and discussions
+- Lock issues and pull requests
+- Pin issues
+- Change discussion categories
+- Create issues from discussions
+- Apply rules when content matches regular expressions
 
+## Inputs
 
-## Usage
+The action accepts the following inputs from [action.yml](./action.yml):
 
-After testing, you can create version tag(s) that developers can use to
-reference different stable versions of your action. For more information, see
-[Versioning](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
-in the GitHub Actions toolkit.
+| Input | Required | Default | Description |
+| --- | --- | --- | --- |
+| `github-token` | No | `${{ github.token }}` | Token used for GitHub API access. |
+| `config-path` | No | `.github/gh-labeler.yaml` | Path to the YAML configuration file. |
+| `process` | No | `issue`, `pr`, `discussion` | Restricts processing to one or more thread types. |
 
-To include the action in a workflow in another repository, you can use the
-`uses` syntax with the `@` symbol to reference a specific branch, tag, or commit
-hash.
+`process` accepts a comma-separated list or newline-separated list using the
+values `issue`, `pr`, and `discussion`.
+
+## Example Workflow
 
 ```yaml
-name: 'Github Labeler'
+name: Label Threads
 
 on:
   issues:
-    types: [labeled, unlabeled, opened, edited]
-  issue_comment:
-    types: [created, deleted]
+    types: [opened, edited, labeled, unlabeled]
   pull_request_target:
-    types: [labeled, unlabeled, opened, edited]
+    types: [opened, edited, labeled, unlabeled]
   discussion:
-    types: [labeled, unlabeled, opened, edited]
+    types: [opened, edited, labeled, unlabeled]
 
 permissions:
   contents: read
@@ -47,164 +58,166 @@ permissions:
   discussions: write
 
 jobs:
-  action:
+  gh-labeler:
     runs-on: ubuntu-latest
     steps:
-      - uses: twsl/label-actions@v1
+      - name: Run gh-labeler
+        uses: twsl/gh-labeler@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          config-path: .github/gh-labeler.yaml
 ```
 
-## Initial Setup
-
-After you've cloned the repository to your local machine or codespace, everything is setup already within the devcontainer.
-
-
-## Update the Action Code
-
-The [`src/`](./src/) directory is the heart of your action! This contains the
-source code that will be run when your action is invoked. You can replace the
-contents of this directory with your own code.
-
-There are a few things to keep in mind when writing your action code:
-
-- Most GitHub Actions toolkit and CI/CD operations are processed asynchronously.
-  In `main.ts`, you will see that the action is run in an `async` function.
-
-  ```javascript
-  import * as core from '@actions/core'
-  //...
-
-  async function run() {
-    try {
-      //...
-    } catch (error) {
-      core.setFailed(error.message)
-    }
-  }
-  ```
-
-  For more information about the GitHub Actions toolkit, see the
-  [documentation](https://github.com/actions/toolkit/blob/master/README.md).
-
-So, what are you waiting for? Go ahead and start customizing your action!
-
-1. Create a new branch
-
-   ```bash
-   git checkout -b releases/v1
-   ```
-
-1. Replace the contents of `src/` with your action code
-1. Add tests to `__tests__/` for your source code
-1. Format, test, and build the action
-
-   ```bash
-   npm run all
-   ```
-
-   > This step is important! It will run [`rollup`](https://rollupjs.org/) to
-   > build the final JavaScript action code with all dependencies included. If
-   > you do not run this step, your action will not work correctly when it is
-   > used in a workflow.
-
-1. (Optional) Test your action locally
-
-   The [`@github/local-action`](https://github.com/github/local-action) utility
-   can be used to test your action locally. It is a simple command-line tool
-   that "stubs" (or simulates) the GitHub Actions Toolkit. This way, you can run
-   your TypeScript action locally without having to commit and push your changes
-   to a repository.
-
-   The `local-action` utility can be run in the following ways:
-
-   - Visual Studio Code Debugger
-
-     Make sure to review and, if needed, update
-     [`.vscode/launch.json`](./.vscode/launch.json)
-
-   - Terminal/Command Prompt
-
-     ```bash
-     # npx @github/local action <action-yaml-path> <entrypoint> <dotenv-file>
-     pnpx @github/local-action . src/main.ts .env
-     ```
-
-   You can provide a `.env` file to the `local-action` CLI to set environment
-   variables used by the GitHub Actions Toolkit. For example, setting inputs and
-   event payload data used by your action. For more information, see the example
-   file, [`.env.example`](./.env.example), and the
-   [GitHub Actions Documentation](https://docs.github.com/en/actions/learn-github-actions/variables#default-environment-variables).
-
-1. Commit your changes
-
-   ```bash
-   git add .
-   git commit -m "My first action is ready!"
-   ```
-
-1. Push them to your repository
-
-   ```bash
-   git push -u origin releases/v1
-   ```
-
-1. Create a pull request and get feedback on your action
-1. Merge the pull request into the `main` branch
-
-Your action is now published! :rocket:
-
-For information about versioning your action, see
-[Versioning](https://github.com/actions/toolkit/blob/master/docs/action-versioning.md)
-in the GitHub Actions toolkit.
-
-## Validate the Action
-
-You can now validate the action by referencing it in a workflow file. For
-example, [`ci.yml`](./.github/workflows/ci.yml) demonstrates how to reference an
-action in the same repository.
+If you only want to process a subset of thread types:
 
 ```yaml
-steps:
-  - name: Checkout
-    id: checkout
-    uses: actions/checkout@v4
-
-  - name: Test Local Action
-    id: test-action
-    uses: ./
-    with:
-      milliseconds: 1000
-
-  - name: Print Output
-    id: output
-    run: echo "${{ steps.test-action.outputs.time }}"
+      - name: Run gh-labeler for issues only
+        uses: twsl/gh-labeler@v1
+        with:
+          process: issue
 ```
 
-For example workflow runs, check out the
-[Actions tab](https://github.com/actions/typescript-action/actions)! :rocket:
+## Configuration
 
-## Publishing a New Release
+The default configuration file path is `.github/gh-labeler.yaml`. A complete
+example lives in [example/config.yaml](example/config.yaml).
 
-This project includes a helper script, [`script/release`](./script/release)
-designed to streamline the process of tagging and pushing new releases for
-GitHub Actions.
+There are two primary rule groups.
 
-GitHub Actions allows users to select a specific version of the action to use,
-based on release tags. This script simplifies this process by performing the
-following steps:
+### Label Rules
 
-1. **Retrieving the latest release tag:** The script starts by fetching the most
-   recent SemVer release tag of the current branch, by looking at the local data
-   available in your repository.
-1. **Prompting for a new release tag:** The user is then prompted to enter a new
-   release tag. To assist with this, the script displays the tag retrieved in
-   the previous step, and validates the format of the inputted tag (vX.X.X). The
-   user is also reminded to update the version field in package.json.
-1. **Tagging the new release:** The script then tags a new release and syncs the
-   separate major tag (e.g. v1, v2) with the new release tag (e.g. v1.0.0,
-   v2.1.2). When the user is creating a new major release, the script
-   auto-detects this and creates a `releases/v#` branch for the previous major
-   version.
-1. **Pushing changes to remote:** Finally, the script pushes the necessary
-   commits, tags and branches to the remote repository. From here, you will need
-   to create a new release in GitHub so users can easily reference the new tags
-   in their workflows.
+Use `labels.add`, `labels.remove`, and `labels.default` to react to label
+changes.
+
+```yaml
+labels:
+  add:
+    bug:
+      comments:
+        - "Thank you for the report."
+      issues:
+        assignees:
+          add:
+            - maintainer
+      prs:
+        reviewers:
+          add:
+            - reviewer
+
+  remove:
+    wip:
+      prs:
+        reviewers:
+          add:
+            - reviewer
+
+  default:
+    "*":
+      comments:
+        - "A matching rule ran for this thread."
+```
+
+### Regex Rules
+
+Use `regex` to match the title and body of newly opened or edited threads.
+Regex rules can add labels and trigger the same kinds of follow-up actions.
+
+```yaml
+regex:
+  "\\b(security|vulnerability|CVE)\\b":
+    labels:
+      add:
+        - security
+        - needs-triage
+    issues:
+      assignees:
+        add:
+          - security-triage
+```
+
+By default the action scans both the title and the body. You can control that
+globally with the following keys:
+
+```yaml
+scanTitle: true
+scanBody: true
+```
+
+Regex rules are case-insensitive by default. Set `caseSensitive: true` inside a
+rule when you need exact casing.
+
+## Supported Action Fields
+
+The configuration schema supports these common action fields:
+
+| Field | Issues | Pull requests | Discussions |
+| --- | --- | --- | --- |
+| `comments` | Yes | Yes | Yes |
+| `labels.add` | Yes | Yes | Yes |
+| `labels.remove` | Yes | Yes | Yes |
+| `assignees.add` | Yes | Yes | No |
+| `assignees.remove` | Yes | Yes | No |
+| `reviewers.add` | No | Yes | No |
+| `reviewers.remove` | No | Yes | No |
+| `close` | Yes | Yes | Yes |
+| `close_reason` | Yes | No | Yes |
+| `lock` | Yes | Yes | No |
+| `pin` | Yes | No | No |
+| `category` | No | No | Yes |
+| `create_issue` | No | No | Yes |
+
+Some fields present in the example configuration are intentionally future-facing
+or partial. The current implementation warns instead of silently pretending to
+support unsupported operations such as project management and issue-to-
+discussion conversion.
+
+## Development
+
+This repository uses TypeScript, pnpm, Jest, Rollup, and Biome.
+
+### Commands
+
+| Command | Purpose |
+| --- | --- |
+| `pnpm run format` | Format source and test files with Biome. |
+| `pnpm run lint` | Run Biome linting. |
+| `pnpm test` | Run the Jest test suite. |
+| `pnpm run coverage` | Run tests with coverage reporting. |
+| `pnpm run package` | Build the action bundle into `dist/`. |
+| `pnpm run all` | Format, lint, test, collect coverage, and package. |
+
+### Local Validation
+
+Use the local action runner when you want to exercise the action without pushing
+to GitHub.
+
+```bash
+pnpx @github/local-action . src/main.ts .env
+```
+
+## Release Process
+
+The repository includes [script/release](script/release), a helper for creating
+and pushing semantic version tags.
+
+The script:
+
+1. Finds the latest existing release tag.
+2. Prompts for a new semantic version tag in the `vX.Y.Z` format.
+3. Creates the version tag and updates the major version tag.
+4. Pushes the tags and, for new majors, creates a matching `releases/vX` branch.
+
+Before running it, make sure the bundle in `dist/` is up to date.
+
+## Testing Notes
+
+The action is exercised through unit tests and integration-style fixture tests
+under [tests](tests). Sample event payloads used by those tests live under
+[data](data).
+
+## Credits
+
+This project builds on ideas from the following repositories:
+
+- [toshimaru/label-actions](https://github.com/toshimaru/label-actions)
+- [dessant/label-actions](https://github.com/dessant/label-actions)

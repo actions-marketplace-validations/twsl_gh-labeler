@@ -1,8 +1,8 @@
 import * as core from "@actions/core";
 import type { DiscussionEvent } from "@octokit/webhooks-types";
-import { AbstractHandler } from "./baseHandler";
-import type { ThreadType } from "@/types/common";
 import type Discussions from "@/models/internal/config/discussions";
+import type { ThreadType } from "@/types/common";
+import { AbstractHandler } from "./baseHandler";
 
 export class DiscussionHandler extends AbstractHandler {
 	getThreadType(): ThreadType {
@@ -42,7 +42,7 @@ export class DiscussionHandler extends AbstractHandler {
 					});
 				}
 			} catch (error) {
-				core.warning(`Failed to comment on discussion: ${error}`);
+				this.failAction("Failed to comment on discussion", error);
 			}
 		}
 
@@ -98,7 +98,7 @@ export class DiscussionHandler extends AbstractHandler {
 						});
 					}
 				} catch (error) {
-					core.warning(`Failed to add labels to discussion: ${error}`);
+					this.failAction("Failed to add labels to discussion", error);
 				}
 			}
 		}
@@ -155,7 +155,7 @@ export class DiscussionHandler extends AbstractHandler {
 						});
 					}
 				} catch (error) {
-					core.warning(`Failed to remove labels from discussion: ${error}`);
+					this.failAction("Failed to remove labels from discussion", error);
 				}
 			}
 		}
@@ -203,10 +203,10 @@ export class DiscussionHandler extends AbstractHandler {
 						categoryId: category.id,
 					});
 				} else {
-					core.warning(`Category "${discussionActions.category}" not found in repository`);
+					this.failAction(`Category "${discussionActions.category}" not found in repository`);
 				}
 			} catch (error) {
-				core.warning(`Failed to change discussion category: ${error}`);
+				this.failAction("Failed to change discussion category", error);
 			}
 		}
 
@@ -239,7 +239,7 @@ export class DiscussionHandler extends AbstractHandler {
 					reason,
 				});
 			} catch (error) {
-				core.warning(`Failed to close discussion: ${error}`);
+				this.failAction("Failed to close discussion", error);
 			}
 		}
 
@@ -254,7 +254,7 @@ export class DiscussionHandler extends AbstractHandler {
 					body: `Created from discussion: ${threadData.html_url || ""}\n\n${threadData.body || ""}`,
 				});
 			} catch (error) {
-				core.warning(`Failed to create issue from discussion: ${error}`);
+				this.failAction("Failed to create issue from discussion", error);
 			}
 		}
 	}

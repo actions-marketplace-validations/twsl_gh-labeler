@@ -12,18 +12,25 @@ import type Config from "@/models/internal/config"; // Import type for the loade
 import type GHActionConfig from "@/models/internal/ghActionConfig";
 import ghActionConfigSchema from "@/schemas/ghActionConfig"; // Import the schema
 
-async function loadConfig(configPath: string): Promise<Config> {
-	try {
-		if (!fs.existsSync(configPath)) {
-			core.setFailed(`Configuration file not found at path: ${configPath}`);
-			return Promise.resolve({} as Config);
-		}
-		const configFileContent = fs.readFileSync(configPath, "utf8");
-		return Promise.resolve(parse(configFileContent) as Config);
-	} catch (e: unknown) {
-		core.setFailed(`Failed to load or parse configuration file at ${configPath}: ${e}`);
-		return Promise.resolve({} as Config);
+function loadConfig(configPath: string): Config {
+	if (!fs.existsSync(configPath)) {
+		throw new Error(`Configuration file not found at path: ${configPath}`);
 	}
+
+	try {
+		const configFileContent = fs.readFileSync(configPath, "utf8");
+		return parse(configFileContent) as Config;
+	} catch (error: unknown) {
+		throw new Error(`Failed to load or parse configuration file at ${configPath}: ${error}`);
+	}
+}
+
+function shouldProcessThread(threadType: "issue" | "pr" | "discussion", actionConfig: GHActionConfig): boolean {
+	if (!actionConfig.process || actionConfig.process.length === 0) {
+		return true;
+	}
+
+	return actionConfig.process.includes(threadType);
 }
 
 export async function run(): Promise<void> {
@@ -47,7 +54,7 @@ export async function run(): Promise<void> {
 			return;
 		}
 
-		const config: Config = await loadConfig(validatedActionConfig["config-path"]);
+		const config = loadConfig(validatedActionConfig["config-path"]);
 
 		const context = github.context;
 		const payload = context.payload as IssuesEvent | PullRequestEvent | DiscussionEvent;
@@ -70,14 +77,26 @@ export async function run(): Promise<void> {
 			let threadType: "issue" | "pr" | "discussion";
 
 			if ("issue" in payload && payload.issue) {
+				if (!shouldProcessThread("issue", validatedActionConfig)) {
+					core.info("Skipping issue content processing because it is excluded by the process input");
+					return;
+				}
 				contentHandler = new ContentLabelHandler(config, actionConfig, "issue");
 				threadData = payload.issue;
 				threadType = "issue";
 			} else if ("pull_request" in payload && payload.pull_request) {
+				if (!shouldProcessThread("pr", validatedActionConfig)) {
+					core.info("Skipping pull request content processing because it is excluded by the process input");
+					return;
+				}
 				contentHandler = new ContentLabelHandler(config, actionConfig, "pr");
 				threadData = payload.pull_request;
 				threadType = "pr";
 			} else if ("discussion" in payload && payload.discussion) {
+				if (!shouldProcessThread("discussion", validatedActionConfig)) {
+					core.info("Skipping discussion content processing because it is excluded by the process input");
+					return;
+				}
 				contentHandler = new ContentLabelHandler(config, actionConfig, "discussion");
 				threadData = payload.discussion;
 				threadType = "discussion";
@@ -104,16 +123,28 @@ export async function run(): Promise<void> {
 			let threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"];
 
 			if ("issue" in payload && payload.issue) {
+				if (!shouldProcessThread("issue", validatedActionConfig)) {
+					core.info("Skipping issue label processing because it is excluded by the process input");
+					return;
+				}
 				handler = new IssueHandler(config, actionConfig);
 				threadData = payload.issue;
 				core.info(`Processing issue #${threadData.number}`);
 				await handler.performActions(payload, threadData as IssuesEvent["issue"]);
 			} else if ("pull_request" in payload && payload.pull_request) {
+				if (!shouldProcessThread("pr", validatedActionConfig)) {
+					core.info("Skipping pull request label processing because it is excluded by the process input");
+					return;
+				}
 				handler = new PullRequestHandler(config, actionConfig);
 				threadData = payload.pull_request;
 				core.info(`Processing pull request #${threadData.number}`);
 				await handler.performActions(payload, threadData as PullRequestEvent["pull_request"]);
 			} else if ("discussion" in payload && payload.discussion) {
+				if (!shouldProcessThread("discussion", validatedActionConfig)) {
+					core.info("Skipping discussion label processing because it is excluded by the process input");
+					return;
+				}
 				handler = new DiscussionHandler(config, actionConfig);
 				threadData = payload.discussion;
 				core.info(`Processing discussion #${threadData.number}`);
@@ -127,6 +158,8 @@ export async function run(): Promise<void> {
 		}
 	} catch (error) {
 		const errorMessage = error instanceof Error ? error.message : String(error);
-		core.setFailed(errorMessage);
+		if (!(error instanceof Error && error.name === "ActionFailure")) {
+			core.setFailed(errorMessage);
+		}
 	}
 }

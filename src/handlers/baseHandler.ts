@@ -1,14 +1,23 @@
+import * as core from "@actions/core";
 import * as github from "@actions/github";
-import type { WebhookPayload } from "@actions/github/lib/interfaces";
 import type { DiscussionEvent, IssuesEvent, PullRequestEvent } from "@octokit/webhooks-types";
 import type Config from "@/models/internal/config";
 import type Actions from "@/models/internal/config/actions";
 import type GHActionConfig from "@/models/internal/ghActionConfig";
 import type { ThreadType } from "@/types/common";
 
+type HandlerPayload = IssuesEvent | PullRequestEvent | DiscussionEvent;
+
+export class ActionFailure extends Error {
+	constructor(message: string) {
+		super(message);
+		this.name = "ActionFailure";
+	}
+}
+
 export interface BaseHandler {
 	performActions(
-		payload: WebhookPayload,
+		payload: HandlerPayload,
 		threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"],
 	): Promise<void>;
 }
@@ -31,7 +40,7 @@ export abstract class AbstractHandler implements BaseHandler {
 	abstract getThreadType(): ThreadType;
 
 	abstract performActions(
-		payload: WebhookPayload,
+		payload: HandlerPayload,
 		threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"],
 	): Promise<void>;
 
@@ -79,12 +88,31 @@ export abstract class AbstractHandler implements BaseHandler {
 
 		// Merge root-level actions with thread-specific actions
 		// Thread-specific actions should override root-level ones
-		const mergedConfig = { ...labelConfig };
+		const mergedConfig = JSON.parse(JSON.stringify(labelConfig)) as Actions;
 		const threadActions = labelConfig[threadKey];
+		const mergedConfigRecord = mergedConfig as Record<string, unknown>;
 
 		if (threadActions) {
-			// Deep merge thread-specific actions
-			Object.assign(mergedConfig, threadActions);
+			for (const [key, value] of Object.entries(threadActions)) {
+				const existingValue = mergedConfigRecord[key];
+
+				if (
+					value &&
+					typeof value === "object" &&
+					!Array.isArray(value) &&
+					existingValue &&
+					typeof existingValue === "object" &&
+					!Array.isArray(existingValue)
+				) {
+					mergedConfigRecord[key] = {
+						...existingValue,
+						...value,
+					};
+					continue;
+				}
+
+				mergedConfigRecord[key] = value;
+			}
 		}
 
 		return mergedConfig;
@@ -135,5 +163,12 @@ export abstract class AbstractHandler implements BaseHandler {
 		} else {
 			await action();
 		}
+	}
+
+	protected failAction(message: string, error?: unknown): never {
+		const suffix = error ? `: ${error instanceof Error ? error.message : String(error)}` : "";
+		const failure = new ActionFailure(`${message}${suffix}`);
+		core.setFailed(failure.message);
+		throw failure;
 	}
 }

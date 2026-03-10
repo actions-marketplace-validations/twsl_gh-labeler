@@ -1,9 +1,16 @@
 import * as core from "@actions/core";
 import type { IssuesEvent } from "@octokit/webhooks-types";
-import _ from "lodash";
-import { AbstractHandler } from "./baseHandler";
-import type { ThreadType } from "@/types/common";
 import type Issues from "@/models/internal/config/issues";
+import type { ThreadType } from "@/types/common";
+import { AbstractHandler } from "./baseHandler";
+
+function difference<T>(left: T[], right: T[]): T[] {
+	return left.filter((item) => !right.includes(item));
+}
+
+function intersection<T>(left: T[], right: T[]): T[] {
+	return left.filter((item) => right.includes(item));
+}
 
 export class IssueHandler extends AbstractHandler {
 	getThreadType(): ThreadType {
@@ -36,7 +43,7 @@ export class IssueHandler extends AbstractHandler {
 
 			await this.ensureUnlock(issue as any, lock, async () => {
 				for (const comment of issueActions.comments || []) {
-					const commentBody = comment.replace(/{issue-author}/g, threadData.user.login);
+					const commentBody = comment.replace(/{issue-author}/g, threadData.user?.login || "unknown");
 
 					await this.client.rest.issues.createComment({
 						...issue,
@@ -52,7 +59,7 @@ export class IssueHandler extends AbstractHandler {
 				? issueActions.labels.add
 				: Object.keys(issueActions.labels.add);
 			const currentLabels = threadData.labels?.map((label) => label.name) || [];
-			const newLabels = _.difference(labelsToAdd, currentLabels);
+			const newLabels = difference(labelsToAdd, currentLabels);
 
 			if (newLabels.length) {
 				core.debug(`Adding labels to issue: ${newLabels.join(", ")}`);
@@ -69,7 +76,7 @@ export class IssueHandler extends AbstractHandler {
 				? issueActions.labels.remove
 				: Object.keys(issueActions.labels.remove);
 			const currentLabels = threadData.labels?.map((label) => label.name) || [];
-			const removedLabels = _.intersection(currentLabels, labelsToRemove);
+			const removedLabels = intersection(currentLabels, labelsToRemove);
 
 			for (const label of removedLabels) {
 				core.debug(`Removing label from issue: ${label}`);
@@ -139,7 +146,7 @@ export class IssueHandler extends AbstractHandler {
 						issueId: threadData.node_id,
 					});
 				} catch (error) {
-					core.warning(`Failed to pin issue: ${error}`);
+					this.failAction("Failed to pin issue", error);
 				}
 			}
 		}
@@ -148,7 +155,7 @@ export class IssueHandler extends AbstractHandler {
 		if (issueActions.convert_to_discussion) {
 			core.debug("Converting issue to discussion");
 			// Note: This requires GraphQL API and a category ID
-			core.warning("Issue to discussion conversion requires a category ID - not fully implemented");
+			this.failAction("Issue to discussion conversion requires a category ID and is not implemented");
 		}
 
 		// Handle milestones - add
@@ -164,17 +171,17 @@ export class IssueHandler extends AbstractHandler {
 					repo: this.repo,
 				});
 
-				const milestone = milestones.find((m) => m.title === milestoneTitle);
+				const milestone = milestones.find((m: { title: string; number: number }) => m.title === milestoneTitle);
 				if (milestone) {
 					await this.client.rest.issues.update({
 						...issue,
 						milestone: milestone.number,
 					});
 				} else {
-					core.warning(`Milestone "${milestoneTitle}" not found`);
+					this.failAction(`Milestone "${milestoneTitle}" not found`);
 				}
 			} catch (error) {
-				core.warning(`Failed to add milestone: ${error}`);
+				this.failAction("Failed to add milestone", error);
 			}
 		}
 

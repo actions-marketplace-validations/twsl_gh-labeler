@@ -1,5 +1,7 @@
 name: Github Labeler
-description: A Github Action to label your issues, prs and discussions with additional info
+description: >-
+  A GitHub Action to label issues, pull requests, and discussions with
+  additional metadata.
 author: twsl
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.
@@ -16,7 +18,7 @@ inputs:
   config-path:
     description: "Configuration file path"
     default: ".github/gh-labeler.yaml"
-  
+
   process:
     description: "Process to run (issue, pr, discussion)"
     default: |

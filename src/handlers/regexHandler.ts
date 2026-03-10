@@ -1,12 +1,12 @@
 import * as core from "@actions/core";
-import type { IssuesEvent, PullRequestEvent, DiscussionEvent } from "@octokit/webhooks-types";
+import type { DiscussionEvent, IssuesEvent, PullRequestEvent } from "@octokit/webhooks-types";
 import { AbstractHandler } from "@/handlers/baseHandler";
+import { DiscussionHandler } from "@/handlers/discussionHandler";
 import { IssueHandler } from "@/handlers/issueHandler";
 import { PullRequestHandler } from "@/handlers/pullRequestHandler";
-import { DiscussionHandler } from "@/handlers/discussionHandler";
-import type { ThreadType } from "@/types/common";
-import type GHActionConfig from "@/models/internal/ghActionConfig";
 import type Config from "@/models/internal/config";
+import type GHActionConfig from "@/models/internal/ghActionConfig";
+import type { ThreadType } from "@/types/common";
 
 export class RegexHandler extends AbstractHandler {
 	private issueHandler: IssueHandler;
@@ -21,8 +21,7 @@ export class RegexHandler extends AbstractHandler {
 	}
 
 	getThreadType(): ThreadType {
-		// This handler works with all thread types
-		return "issue"; // Default, but will be overridden by context
+		return "issue";
 	}
 
 	async performActions(
@@ -77,10 +76,10 @@ export class RegexHandler extends AbstractHandler {
 						await this.discussionHandler.performActions(syntheticPayload, threadData as DiscussionEvent["discussion"]);
 						break;
 					default:
-						core.warning(`Unknown thread type: ${threadType}`);
+						this.failAction(`Unknown thread type: ${threadType}`);
 				}
 			} catch (error) {
-				core.error(`Error processing regex-matched label ${label}: ${error}`);
+				this.failAction(`Error processing regex-matched label ${label}`, error);
 			}
 		}
 	}
@@ -102,17 +101,30 @@ export class RegexHandler extends AbstractHandler {
 
 		// Handle labels property - discussions might not have labels
 		const currentLabels =
-			"labels" in threadData && threadData.labels ? threadData.labels.map((label: any) => label.name) : [];
+			"labels" in threadData && threadData.labels
+				? threadData.labels
+						.map((label: { name?: string | null }) => label.name)
+						.filter((labelName): labelName is string => Boolean(labelName))
+				: [];
 		const matchingLabels: string[] = [];
 
 		// Check each regex pattern
 		for (const [pattern, actions] of Object.entries(regexConfig)) {
 			if (!actions || typeof actions !== "object") {
 				continue;
-			} // Create regex with case sensitivity option
-			const caseSensitive = (this.config as any).caseSensitive || false;
+			}
+
+			const caseSensitive =
+				"caseSensitive" in actions ? Boolean((actions as { caseSensitive?: boolean }).caseSensitive) : false;
 			const flags = caseSensitive ? "g" : "gi";
-			const regex = new RegExp(pattern, flags);
+			let regex: RegExp;
+
+			try {
+				regex = new RegExp(pattern, flags);
+			} catch (error) {
+				core.warning(`Skipping invalid regex pattern "${pattern}": ${error}`);
+				continue;
+			}
 
 			if (regex.test(textToScan)) {
 				core.debug(`Regex pattern "${pattern}" matched content`);
