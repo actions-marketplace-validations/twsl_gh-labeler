@@ -30,11 +30,11 @@ matching GitHub API calls.
 
 The action accepts the following inputs from [action.yml](./action.yml):
 
-| Input | Required | Default | Description |
-| --- | --- | --- | --- |
-| `github-token` | No | `${{ github.token }}` | Token used for GitHub API access. |
-| `config-path` | No | `.github/gh-labeler.yaml` | Path to the YAML configuration file. |
-| `process` | No | `issue`, `pr`, `discussion` | Restricts processing to one or more thread types. |
+| Input          | Required | Default                     | Description                                       |
+| -------------- | -------- | --------------------------- | ------------------------------------------------- |
+| `github-token` | No       | `${{ github.token }}`       | Token used for GitHub API access.                 |
+| `config-path`  | No       | `.github/gh-labeler.yaml`   | Path to the YAML configuration file.              |
+| `process`      | No       | `issue`, `pr`, `discussion` | Restricts processing to one or more thread types. |
 
 `process` accepts a comma-separated list or newline-separated list using the
 values `issue`, `pr`, and `discussion`.
@@ -72,10 +72,10 @@ jobs:
 If you only want to process a subset of thread types:
 
 ```yaml
-      - name: Run gh-labeler for issues only
-        uses: twsl/gh-labeler@v1
-        with:
-          process: issue
+- name: Run gh-labeler for issues only
+  uses: twsl/gh-labeler@v1
+  with:
+    process: issue
 ```
 
 ## Configuration
@@ -152,21 +152,21 @@ Regular expression rules are case-insensitive by default. Set
 
 The configuration schema supports these common action fields:
 
-| Field | Issues | Pull requests | Discussions |
-| --- | --- | --- | --- |
-| `comments` | Yes | Yes | Yes |
-| `labels.add` | Yes | Yes | Yes |
-| `labels.remove` | Yes | Yes | Yes |
-| `assignees.add` | Yes | Yes | No |
-| `assignees.remove` | Yes | Yes | No |
-| `reviewers.add` | No | Yes | No |
-| `reviewers.remove` | No | Yes | No |
-| `close` | Yes | Yes | Yes |
-| `close_reason` | Yes | No | Yes |
-| `lock` | Yes | Yes | No |
-| `pin` | Yes | No | No |
-| `category` | No | No | Yes |
-| `create_issue` | No | No | Yes |
+| Field              | Issues | Pull requests | Discussions |
+| ------------------ | ------ | ------------- | ----------- |
+| `comments`         | Yes    | Yes           | Yes         |
+| `labels.add`       | Yes    | Yes           | Yes         |
+| `labels.remove`    | Yes    | Yes           | Yes         |
+| `assignees.add`    | Yes    | Yes           | No          |
+| `assignees.remove` | Yes    | Yes           | No          |
+| `reviewers.add`    | No     | Yes           | No          |
+| `reviewers.remove` | No     | Yes           | No          |
+| `close`            | Yes    | Yes           | Yes         |
+| `close_reason`     | Yes    | No            | Yes         |
+| `lock`             | Yes    | Yes           | No          |
+| `pin`              | Yes    | No            | No          |
+| `category`         | No     | No            | Yes         |
+| `create_issue`     | No     | No            | Yes         |
 
 Some fields present in the example configuration are intentionally future-facing
 or partial. The current implementation warns instead of silently pretending to
@@ -179,14 +179,14 @@ This repository uses TypeScript, pnpm, Jest, Rollup, and Biome.
 
 ### Commands
 
-| Command | Purpose |
-| --- | --- |
-| `pnpm run format` | Format source and test files with Biome. |
-| `pnpm run lint` | Run Biome linting. |
-| `pnpm test` | Run the Jest test suite. |
-| `pnpm run coverage` | Run tests with coverage reporting. |
-| `pnpm run package` | Build the action bundle into `dist/`. |
-| `pnpm run all` | Format, lint, test, collect coverage, and package. |
+| Command             | Purpose                                            |
+| ------------------- | -------------------------------------------------- |
+| `pnpm run format`   | Format source and test files with Biome.           |
+| `pnpm run lint`     | Run Biome linting.                                 |
+| `pnpm test`         | Run the Jest test suite.                           |
+| `pnpm run coverage` | Run tests with coverage reporting.                 |
+| `pnpm run package`  | Build the action bundle into `dist/`.              |
+| `pnpm run all`      | Format, lint, test, collect coverage, and package. |
 
 `dist/` is intentionally not committed on `main`. Local CI builds the bundle
 before invoking `uses: ./`.

@@ -5,7 +5,7 @@
  */
 
 export default interface ContentRule {
-  pattern: string;
-  label: string;
-  caseSensitive?: boolean;
+	pattern: string;
+	label: string;
+	caseSensitive?: boolean;
 }

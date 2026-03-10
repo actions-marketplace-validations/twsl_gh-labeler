@@ -5,10 +5,10 @@ import type Issues from "@/models/internal/config/issues";
 import type Discussions from "@/models/internal/config/discussions";
 
 interface Actions extends Comments {
-  labels?: Labels;
-  issues?: Issues;
-  prs?: PRs;
-  discussions?: Discussions;
+	labels?: Labels;
+	issues?: Issues;
+	prs?: PRs;
+	discussions?: Discussions;
 }
 
 export default Actions;

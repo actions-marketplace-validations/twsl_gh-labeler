@@ -1,5 +1,5 @@
 interface Comments {
-  comments?: string[];
+	comments?: string[];
 }
 
 export default Comments;
