@@ -1,4 +1,4 @@
-name: Manage Version Tags
+name: Publish Release Refs
 
 on:
   push:
@@ -6,15 +6,59 @@ on:
       - 'v[0-9]+.[0-9]+.[0-9]+'  # Matches semantic version tags like v1.0.0
 
 jobs:
-  manage-tags:
+  publish-release-refs:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # Required to push tags
+      contents: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 0  # Fetch all history to access tags
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        id: setup-node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install Dependencies
+        id: pnpm-ci
+        run: pnpm install
+
+      - name: Build
+        id: pnpm-build
+        run: pnpm run package
+
+      - name: Publish bundled release refs
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          major_tag="${RELEASE_TAG%%.*}"
+          release_branch="releases/${major_tag}"
+
+          git checkout -B "$release_branch"
+          git add -f dist/
+
+          if ! git diff --cached --quiet; then
+            git commit -m "Build ${RELEASE_TAG}"
+          fi
+
+          git tag -fa "$RELEASE_TAG" -m "${RELEASE_TAG} Release" HEAD
+
+          git push origin "HEAD:${release_branch}" --force
+          git push origin "refs/tags/${RELEASE_TAG}" --force
 
       - name: Manage short version tags
         uses: twsl/gha-manage-version-tags@v1

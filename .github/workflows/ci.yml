@@ -62,6 +62,26 @@ jobs:
         id: checkout
         uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v4
+        name: Install pnpm
+        with:
+          run_install: false
+
+      - name: Setup Node.js
+        id: setup-node
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install Dependencies
+        id: pnpm-ci
+        run: pnpm install
+
+      - name: Build
+        id: pnpm-build
+        run: pnpm run package
+
       - name: Test Local Action
         id: test-action
         uses: ./

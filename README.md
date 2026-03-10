@@ -2,7 +2,7 @@
 
 [![GitHub Super-Linter](https://github.com/twsl/gh-labeler/actions/workflows/linter.yml/badge.svg)](https://github.com/super-linter/super-linter)
 ![CI](https://github.com/twsl/gh-labeler/actions/workflows/ci.yml/badge.svg)
-[![Check dist/](https://github.com/twsl/gh-labeler/actions/workflows/check-dist.yml/badge.svg)](https://github.com/twsl/gh-labeler/actions/workflows/check-dist.yml)
+[![Publish Release Refs](https://github.com/twsl/gh-labeler/actions/workflows/manage-version-tags.yml/badge.svg)](https://github.com/twsl/gh-labeler/actions/workflows/manage-version-tags.yml)
 [![CodeQL](https://github.com/twsl/gh-labeler/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/twsl/gh-labeler/actions/workflows/codeql-analysis.yml)
 
 gh-labeler is a GitHub Action that applies labels and follow-up actions to
@@ -186,6 +186,9 @@ This repository uses TypeScript, pnpm, Jest, Rollup, and Biome.
 | `pnpm run package` | Build the action bundle into `dist/`. |
 | `pnpm run all` | Format, lint, test, collect coverage, and package. |
 
+`dist/` is intentionally not committed on `main`. Local CI builds the bundle
+before invoking `uses: ./`.
+
 ### Local Validation
 
 Use the local action runner when you want to exercise the action without pushing
@@ -207,7 +210,12 @@ The script:
 3. Creates the version tag and updates the major version tag.
 4. Pushes the tags and, for new majors, creates a matching `releases/vX` branch.
 
-Before running it, make sure the bundle in `dist/` is up to date.
+After the tag is pushed, the `Publish Release Refs` workflow builds `dist/` from
+that tagged source commit, force-updates the `vX.Y.Z` tag to the bundled
+commit, refreshes the matching `releases/vX` branch, and then uses
+`twsl/gha-manage-version-tags` to publish the `vX` and `vX.Y` tags from that
+bundled release tag. This keeps build artifacts out of `main` while still
+publishing runnable action refs.
 
 ## Testing Notes
 
