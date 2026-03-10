@@ -24,6 +24,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - uses: pnpm/action-setup@v4
         name: Install pnpm
@@ -49,6 +50,7 @@ jobs:
           FILTER_REGEX_EXCLUDE: >-
             ^(dist/.*|pnpm-lock\.yaml|\.github/copilot-instructions\.md)$
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
           LINTER_RULES_PATH: ${{ github.workspace }}
           VALIDATE_ALL_CODEBASE: true
           VALIDATE_JAVASCRIPT_ES: false

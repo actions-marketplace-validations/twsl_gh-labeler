@@ -1,31 +1,31 @@
 {
-  "action": "created",
-  "discussion": {
-    "id": 301,
-    "number": 301,
-    "title": "How to configure custom labels?",
-    "body": "I'm trying to set up custom labels for my project but I'm not sure how to configure the regex patterns correctly.\n\n## What I've Tried\n- Read the documentation\n- Looked at examples\n- Still confused about the syntax\n\nCan someone provide a working example?",
-    "state": "open",
-    "category": {
-      "id": "DIC_kwDOABCD01",
-      "name": "Q&A",
-      "emoji": "❓",
-      "slug": "q-a"
-    },
-    "user": {
-      "login": "curious-user"
-    },
-    "node_id": "D_kwDOABCD1234567890",
-    "labels": []
-  },
-  "repository": {
-    "name": "test-repo",
-    "full_name": "test-owner/test-repo",
-    "owner": {
-      "login": "test-owner"
-    }
-  },
-  "sender": {
-    "login": "curious-user"
-  }
+	"action": "created",
+	"discussion": {
+		"id": 301,
+		"number": 301,
+		"title": "How to configure custom labels?",
+		"body": "I'm trying to set up custom labels for my project but I'm not sure how to configure the regex patterns correctly.\n\n## What I've Tried\n- Read the documentation\n- Looked at examples\n- Still confused about the syntax\n\nCan someone provide a working example?",
+		"state": "open",
+		"category": {
+			"id": "DIC_kwDOABCD01",
+			"name": "Q&A",
+			"emoji": "❓",
+			"slug": "q-a"
+		},
+		"user": {
+			"login": "curious-user"
+		},
+		"node_id": "D_kwDOABCD1234567890",
+		"labels": []
+	},
+	"repository": {
+		"name": "test-repo",
+		"full_name": "test-owner/test-repo",
+		"owner": {
+			"login": "test-owner"
+		}
+	},
+	"sender": {
+		"login": "curious-user"
+	}
 }

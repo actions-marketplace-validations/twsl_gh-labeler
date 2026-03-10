@@ -1,25 +1,25 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
-  "linter": {
-    "rules": {
-      "suspicious": {
-        "noExplicitAny": "off"
-      }
-    }
-  },
-  "formatter": {
-    "lineWidth": 120,
-    "useEditorconfig": true,
-    "enabled": true
-  },
-  "assist": {
-    "enabled": true,
-    "actions": {
-      "recommended": true,
-      "source": {
-        "recommended": true,
-        "organizeImports": "on"
-      }
-    }
-  }
+	"$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
+	"linter": {
+		"rules": {
+			"suspicious": {
+				"noExplicitAny": "off"
+			}
+		}
+	},
+	"formatter": {
+		"lineWidth": 120,
+		"useEditorconfig": true,
+		"enabled": true
+	},
+	"assist": {
+		"enabled": true,
+		"actions": {
+			"recommended": true,
+			"source": {
+				"recommended": true,
+				"organizeImports": "on"
+			}
+		}
+	}
 }

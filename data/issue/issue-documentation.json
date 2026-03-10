@@ -1,24 +1,24 @@
 {
-  "action": "opened",
-  "issue": {
-    "number": 103,
-    "title": "Documentation: API reference is incomplete",
-    "body": "The API documentation is missing several endpoints and parameters.\n\n## Missing Documentation\n- /api/v1/users endpoint\n- Authentication headers\n- Rate limiting information\n\nPlease update the docs to include these.",
-    "state": "open",
-    "labels": [],
-    "user": {
-      "login": "doc-contributor"
-    },
-    "node_id": "I_kwDOABCD1234567892"
-  },
-  "repository": {
-    "name": "test-repo",
-    "full_name": "test-owner/test-repo",
-    "owner": {
-      "login": "test-owner"
-    }
-  },
-  "sender": {
-    "login": "doc-contributor"
-  }
+	"action": "opened",
+	"issue": {
+		"number": 103,
+		"title": "Documentation: API reference is incomplete",
+		"body": "The API documentation is missing several endpoints and parameters.\n\n## Missing Documentation\n- /api/v1/users endpoint\n- Authentication headers\n- Rate limiting information\n\nPlease update the docs to include these.",
+		"state": "open",
+		"labels": [],
+		"user": {
+			"login": "doc-contributor"
+		},
+		"node_id": "I_kwDOABCD1234567892"
+	},
+	"repository": {
+		"name": "test-repo",
+		"full_name": "test-owner/test-repo",
+		"owner": {
+			"login": "test-owner"
+		}
+	},
+	"sender": {
+		"login": "doc-contributor"
+	}
 }

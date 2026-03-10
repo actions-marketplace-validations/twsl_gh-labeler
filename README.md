@@ -179,14 +179,14 @@ This repository uses TypeScript, pnpm, Jest, Rollup, and Biome.
 
 ### Commands
 
-| Command             | Purpose                                            |
-| ------------------- | -------------------------------------------------- |
-| `pnpm run format`   | Format source and test files with Biome.           |
-| `pnpm run lint`     | Run Biome linting.                                 |
-| `pnpm test`         | Run the Jest test suite.                           |
-| `pnpm run coverage` | Run tests with coverage reporting.                 |
-| `pnpm run package`  | Build the action bundle into `dist/`.              |
-| `pnpm run all`      | Format, lint, test, collect coverage, and package. |
+| Command             | Purpose                                             |
+| ------------------- | --------------------------------------------------- |
+| `pnpm run format`   | Format repository code and config files with Biome. |
+| `pnpm run lint`     | Run Biome linting.                                  |
+| `pnpm test`         | Run the Jest test suite.                            |
+| `pnpm run coverage` | Run tests with coverage reporting.                  |
+| `pnpm run package`  | Build the action bundle into `dist/`.               |
+| `pnpm run all`      | Format, lint, test, collect coverage, and package.  |
 
 `dist/` is intentionally not committed on `main`. Local CI builds the bundle
 before invoking `uses: ./`.

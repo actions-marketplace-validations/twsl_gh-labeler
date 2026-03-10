@@ -1,20 +1,20 @@
 {
-  "action": "opened",
-  "issue": {
-    "number": 1,
-    "title": "Bug: Application crashes on startup",
-    "body": "The application crashes when I try to start it. This seems like a critical bug that needs immediate attention.",
-    "state": "open",
-    "labels": []
-  },
-  "repository": {
-    "name": "test-repo",
-    "full_name": "owner/test-repo",
-    "owner": {
-      "login": "owner"
-    }
-  },
-  "sender": {
-    "login": "reporter"
-  }
+	"action": "opened",
+	"issue": {
+		"number": 1,
+		"title": "Bug: Application crashes on startup",
+		"body": "The application crashes when I try to start it. This seems like a critical bug that needs immediate attention.",
+		"state": "open",
+		"labels": []
+	},
+	"repository": {
+		"name": "test-repo",
+		"full_name": "owner/test-repo",
+		"owner": {
+			"login": "owner"
+		}
+	},
+	"sender": {
+		"login": "reporter"
+	}
 }
