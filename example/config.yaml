@@ -23,7 +23,7 @@ labels:
             - techLead
         # Request changes on bug fix PRs
         request_changes: true
-    
+
     enhancement:
       comments:
         - "Thanks for the enhancement request! We'll evaluate it soon."
@@ -39,7 +39,7 @@ labels:
           add:
             - featureReviewer
             - productManager
-    
+
     wontfix:
       comments:
         - "We've decided not to pursue this issue at this time."
@@ -50,7 +50,7 @@ labels:
       # Add lock capability
       lock: true
       lock_reason: "resolved"
-    
+
     security:
       comments:
         - "This has been marked as a security issue. Our security team will review it."
@@ -70,7 +70,7 @@ labels:
           add:
             - sensitive
             - needs-security-review
-    
+
     duplicate:
       comments:
         - "This has been marked as a duplicate. Please refer to the linked issue."
@@ -81,7 +81,7 @@ labels:
       prs:
         # Close duplicate PRs
         close: true
-    
+
     wip:
       comments:
         - "This is marked as work in progress. Please comment when ready for review."
@@ -92,14 +92,14 @@ labels:
         reviewers:
           remove:
             - allReviewers
-    
+
     question:
       comments:
         - "Thanks for your question! Consider using Discussions for Q&A."
       issues:
         # Convert appropriate questions to discussions
         convert_to_discussion: true
-    
+
     "needs info":
       comments:
         - "We need more information to address this. Could you please provide additional details?"
@@ -120,7 +120,7 @@ labels:
         labels:
           remove:
             - hold
-    
+
     wontfix:
       comments:
         - "The wontfix label has been removed. This issue is being reconsidered."
@@ -129,7 +129,7 @@ labels:
         reopen: true
         # Unlock the thread
         unlock: true
-    
+
     duplicate:
       comments:
         - "This is no longer marked as a duplicate."
@@ -173,7 +173,7 @@ regex:
           - securityTriage
       # Pin important security issues
       pin: true
-  
+
   # Pattern to detect bug reports
   "\\b(error|exception|crash|fails|broken)\\b":
     comments:
@@ -182,7 +182,7 @@ regex:
       add:
         - potential-bug
         - needs-triage
-  
+
   # Pattern to detect feature requests
   "\\b(feature request|enhancement|would be nice|please add)\\b":
     comments:
@@ -191,7 +191,7 @@ regex:
       add:
         - enhancement
         - needs-triage
-  
+
   # Pattern to detect first-time contributors
   "first (contribution|PR|pull request)":
     comments:
@@ -204,7 +204,7 @@ regex:
       assignees:
         add:
           - newContributorMentor
-  
+
   # Pattern to detect tests needed
   "\\b(no tests|missing tests|lacks tests)\\b":
     comments:

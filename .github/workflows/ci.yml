@@ -82,13 +82,15 @@ jobs:
         id: pnpm-build
         run: pnpm run package
 
-      - name: Test Local Action
-        id: test-action
-        uses: ./
-        with:
-          config-path: "./example/config.yaml"
-          process: "issue, pr, discussion"
+      - name: Prepare local action environment
+        id: prepare-local-action
+        run: |
+          cat > .env <<'EOF'
+          INPUT_config-path=./example/config.yaml
+          INPUT_process="issue, pr, discussion"
+          EOF
+          printf 'INPUT_github-token="%s"\n' '${{ secrets.GITHUB_TOKEN }}' >> .env
 
-      - name: Print Output
-        id: output
-        run: echo "${{ steps.test-action.outputs.time }}"
+      - name: Test local action
+        id: test-local-action
+        run: pnpm run local-action

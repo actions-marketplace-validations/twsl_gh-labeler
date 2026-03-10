@@ -1,5 +1,9 @@
 import * as core from "@actions/core";
-import type { DiscussionEvent, IssuesEvent, PullRequestEvent } from "@octokit/webhooks-types";
+import type {
+  DiscussionEvent,
+  IssuesEvent,
+  PullRequestEvent,
+} from "@octokit/webhooks-types";
 import { AbstractHandler } from "@/handlers/baseHandler";
 import { DiscussionHandler } from "@/handlers/discussionHandler";
 import { IssueHandler } from "@/handlers/issueHandler";
@@ -9,184 +13,225 @@ import type GHActionConfig from "@/models/internal/ghActionConfig";
 import type { ThreadType } from "@/types/common";
 
 export class RegexHandler extends AbstractHandler {
-	private issueHandler: IssueHandler;
-	private pullRequestHandler: PullRequestHandler;
-	private discussionHandler: DiscussionHandler;
+  private issueHandler: IssueHandler;
+  private pullRequestHandler: PullRequestHandler;
+  private discussionHandler: DiscussionHandler;
 
-	constructor(config: Config, actionConfig: GHActionConfig) {
-		super(config, actionConfig);
-		this.issueHandler = new IssueHandler(config, actionConfig);
-		this.pullRequestHandler = new PullRequestHandler(config, actionConfig);
-		this.discussionHandler = new DiscussionHandler(config, actionConfig);
-	}
+  constructor(config: Config, actionConfig: GHActionConfig) {
+    super(config, actionConfig);
+    this.issueHandler = new IssueHandler(config, actionConfig);
+    this.pullRequestHandler = new PullRequestHandler(config, actionConfig);
+    this.discussionHandler = new DiscussionHandler(config, actionConfig);
+  }
 
-	getThreadType(): ThreadType {
-		return "issue";
-	}
+  getThreadType(): ThreadType {
+    return "issue";
+  }
 
-	async performActions(
-		payload: any,
-		threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"],
-	): Promise<void> {
-		// Determine thread type from the payload
-		let threadType: ThreadType;
-		if ("issue" in payload && payload.issue) {
-			threadType = "issue";
-		} else if ("pull_request" in payload && payload.pull_request) {
-			threadType = "pr";
-		} else if ("discussion" in payload && payload.discussion) {
-			threadType = "discussion";
-		} else {
-			core.debug("Unable to determine thread type from payload");
-			return;
-		}
+  async performActions(
+    payload: any,
+    threadData:
+      | IssuesEvent["issue"]
+      | PullRequestEvent["pull_request"]
+      | DiscussionEvent["discussion"],
+  ): Promise<void> {
+    // Determine thread type from the payload
+    let threadType: ThreadType;
+    if ("issue" in payload && payload.issue) {
+      threadType = "issue";
+    } else if ("pull_request" in payload && payload.pull_request) {
+      threadType = "pr";
+    } else if ("discussion" in payload && payload.discussion) {
+      threadType = "discussion";
+    } else {
+      core.debug("Unable to determine thread type from payload");
+      return;
+    }
 
-		// Check if there are regex patterns that match the content
-		const matchingLabels = await this.findMatchingRegexLabels(threadData, threadType);
+    // Check if there are regex patterns that match the content
+    const matchingLabels = await this.findMatchingRegexLabels(
+      threadData,
+      threadType,
+    );
 
-		if (matchingLabels.length === 0) {
-			core.debug("No regex patterns matched the content");
-			return;
-		}
+    if (matchingLabels.length === 0) {
+      core.debug("No regex patterns matched the content");
+      return;
+    }
 
-		// Process each matching label by delegating to the appropriate handler
-		for (const label of matchingLabels) {
-			core.info(`Processing regex-matched label: ${label}`);
+    // Process each matching label by delegating to the appropriate handler
+    for (const label of matchingLabels) {
+      core.info(`Processing regex-matched label: ${label}`);
 
-			// Create a synthetic payload for the label action
-			const syntheticPayload = {
-				...payload,
-				action: "labeled",
-				label: { name: label },
-			};
+      // Create a synthetic payload for the label action
+      const syntheticPayload = {
+        ...payload,
+        action: "labeled",
+        label: { name: label },
+      };
 
-			// Delegate to the appropriate handler based on thread type
-			try {
-				switch (threadType) {
-					case "issue":
-						await this.issueHandler.performActions(syntheticPayload, threadData as IssuesEvent["issue"]);
-						break;
-					case "pr":
-						await this.pullRequestHandler.performActions(
-							syntheticPayload,
-							threadData as PullRequestEvent["pull_request"],
-						);
-						break;
-					case "discussion":
-						await this.discussionHandler.performActions(syntheticPayload, threadData as DiscussionEvent["discussion"]);
-						break;
-					default:
-						this.failAction(`Unknown thread type: ${threadType}`);
-				}
-			} catch (error) {
-				this.failAction(`Error processing regex-matched label ${label}`, error);
-			}
-		}
-	}
+      // Delegate to the appropriate handler based on thread type
+      try {
+        switch (threadType) {
+          case "issue":
+            await this.issueHandler.performActions(
+              syntheticPayload,
+              threadData as IssuesEvent["issue"],
+            );
+            break;
+          case "pr":
+            await this.pullRequestHandler.performActions(
+              syntheticPayload,
+              threadData as PullRequestEvent["pull_request"],
+            );
+            break;
+          case "discussion":
+            await this.discussionHandler.performActions(
+              syntheticPayload,
+              threadData as DiscussionEvent["discussion"],
+            );
+            break;
+          default:
+            this.failAction(`Unknown thread type: ${threadType}`);
+        }
+      } catch (error) {
+        this.failAction(`Error processing regex-matched label ${label}`, error);
+      }
+    }
+  }
 
-	private async findMatchingRegexLabels(
-		threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"],
-		threadType: ThreadType,
-	): Promise<string[]> {
-		const regexConfig = this.config.regex;
-		if (!regexConfig || Object.keys(regexConfig).length === 0) {
-			core.debug("No regex configuration found");
-			return [];
-		}
+  private async findMatchingRegexLabels(
+    threadData:
+      | IssuesEvent["issue"]
+      | PullRequestEvent["pull_request"]
+      | DiscussionEvent["discussion"],
+    threadType: ThreadType,
+  ): Promise<string[]> {
+    const regexConfig = this.config.regex;
+    if (!regexConfig || Object.keys(regexConfig).length === 0) {
+      core.debug("No regex configuration found");
+      return [];
+    }
 
-		const scanTitle = this.config.scanTitle !== false;
-		const scanBody = this.config.scanBody !== false;
+    const scanTitle = this.config.scanTitle !== false;
+    const scanBody = this.config.scanBody !== false;
 
-		const textToScan = [scanTitle ? threadData.title : "", scanBody ? threadData.body || "" : ""].join("\n");
+    const textToScan = [
+      scanTitle ? threadData.title : "",
+      scanBody ? threadData.body || "" : "",
+    ].join("\n");
 
-		// Handle labels property - discussions might not have labels
-		const currentLabels =
-			"labels" in threadData && threadData.labels
-				? threadData.labels
-						.map((label: { name?: string | null }) => label.name)
-						.filter((labelName): labelName is string => Boolean(labelName))
-				: [];
-		const matchingLabels: string[] = [];
+    // Handle labels property - discussions might not have labels
+    const currentLabels =
+      "labels" in threadData && threadData.labels
+        ? threadData.labels
+            .map((label: { name?: string | null }) => label.name)
+            .filter((labelName): labelName is string => Boolean(labelName))
+        : [];
+    const matchingLabels: string[] = [];
 
-		// Check each regex pattern
-		for (const [pattern, actions] of Object.entries(regexConfig)) {
-			if (!actions || typeof actions !== "object") {
-				continue;
-			}
+    // Check each regex pattern
+    for (const [pattern, actions] of Object.entries(regexConfig)) {
+      if (!actions || typeof actions !== "object") {
+        continue;
+      }
 
-			const caseSensitive =
-				"caseSensitive" in actions ? Boolean((actions as { caseSensitive?: boolean }).caseSensitive) : false;
-			const flags = caseSensitive ? "g" : "gi";
-			let regex: RegExp;
+      const caseSensitive =
+        "caseSensitive" in actions
+          ? Boolean((actions as { caseSensitive?: boolean }).caseSensitive)
+          : false;
+      const flags = caseSensitive ? "g" : "gi";
+      let regex: RegExp;
 
-			try {
-				regex = new RegExp(pattern, flags);
-			} catch (error) {
-				core.warning(`Skipping invalid regex pattern "${pattern}": ${error}`);
-				continue;
-			}
+      try {
+        regex = new RegExp(pattern, flags);
+      } catch (error) {
+        core.warning(`Skipping invalid regex pattern "${pattern}": ${error}`);
+        continue;
+      }
 
-			if (regex.test(textToScan)) {
-				core.debug(`Regex pattern "${pattern}" matched content`);
+      if (regex.test(textToScan)) {
+        core.debug(`Regex pattern "${pattern}" matched content`);
 
-				// Check if this action applies to the current thread type
-				const threadKey = threadType === "issue" ? "issues" : threadType === "pr" ? "prs" : "discussions";
-				const threadSpecificActions = (actions as any)[threadKey];
+        // Check if this action applies to the current thread type
+        const threadKey =
+          threadType === "issue"
+            ? "issues"
+            : threadType === "pr"
+              ? "prs"
+              : "discussions";
+        const threadSpecificActions = (actions as any)[threadKey];
 
-				// Use thread-specific actions if available, otherwise use general actions
-				const applicableActions = threadSpecificActions || actions;
+        // Use thread-specific actions if available, otherwise use general actions
+        const applicableActions = threadSpecificActions || actions;
 
-				if (applicableActions && typeof applicableActions === "object") {
-					// Check if there are labels to add
-					if ("labels" in applicableActions) {
-						const labelsConfig = (applicableActions as any).labels;
-						if (labelsConfig && typeof labelsConfig === "object" && "add" in labelsConfig) {
-							const labelsToAdd = labelsConfig.add;
-							if (Array.isArray(labelsToAdd)) {
-								for (const label of labelsToAdd) {
-									if (typeof label === "string" && !currentLabels.includes(label)) {
-										matchingLabels.push(label);
-									}
-								}
-							}
-						}
-					}
+        if (applicableActions && typeof applicableActions === "object") {
+          // Check if there are labels to add
+          if ("labels" in applicableActions) {
+            const labelsConfig = (applicableActions as any).labels;
+            if (
+              labelsConfig &&
+              typeof labelsConfig === "object" &&
+              "add" in labelsConfig
+            ) {
+              const labelsToAdd = labelsConfig.add;
+              if (Array.isArray(labelsToAdd)) {
+                for (const label of labelsToAdd) {
+                  if (
+                    typeof label === "string" &&
+                    !currentLabels.includes(label)
+                  ) {
+                    matchingLabels.push(label);
+                  }
+                }
+              }
+            }
+          }
 
-					// If no specific labels config, treat the pattern name as a potential label
-					// This allows for backward compatibility with simple regex configs
-					if (!("labels" in applicableActions) && !currentLabels.includes(pattern)) {
-						matchingLabels.push(pattern);
-					}
-				}
-			}
-		}
+          // If no specific labels config, treat the pattern name as a potential label
+          // This allows for backward compatibility with simple regex configs
+          if (
+            !("labels" in applicableActions) &&
+            !currentLabels.includes(pattern)
+          ) {
+            matchingLabels.push(pattern);
+          }
+        }
+      }
+    }
 
-		return [...new Set(matchingLabels)]; // Remove duplicates
-	}
+    return [...new Set(matchingLabels)]; // Remove duplicates
+  }
 
-	/**
-	 * Scan content and add labels based on regex patterns
-	 * This method provides an alternative interface similar to ContentLabelHandler
-	 */
-	async performRegexScanning(
-		threadData: IssuesEvent["issue"] | PullRequestEvent["pull_request"] | DiscussionEvent["discussion"],
-		threadType: ThreadType,
-	): Promise<void> {
-		const matchingLabels = await this.findMatchingRegexLabels(threadData, threadType);
+  /**
+   * Scan content and add labels based on regex patterns
+   * This method provides an alternative interface similar to ContentLabelHandler
+   */
+  async performRegexScanning(
+    threadData:
+      | IssuesEvent["issue"]
+      | PullRequestEvent["pull_request"]
+      | DiscussionEvent["discussion"],
+    threadType: ThreadType,
+  ): Promise<void> {
+    const matchingLabels = await this.findMatchingRegexLabels(
+      threadData,
+      threadType,
+    );
 
-		if (matchingLabels.length > 0) {
-			core.info(`Adding regex-based labels: ${matchingLabels.join(", ")}`);
+    if (matchingLabels.length > 0) {
+      core.info(`Adding regex-based labels: ${matchingLabels.join(", ")}`);
 
-			const issue = {
-				owner: this.owner,
-				repo: this.repo,
-				issue_number: threadData.number,
-			};
+      const issue = {
+        owner: this.owner,
+        repo: this.repo,
+        issue_number: threadData.number,
+      };
 
-			await this.client.rest.issues.addLabels({
-				...issue,
-				labels: matchingLabels,
-			});
-		}
-	}
+      await this.client.rest.issues.addLabels({
+        ...issue,
+        labels: matchingLabels,
+      });
+    }
+  }
 }

@@ -3,7 +3,6 @@ description: >-
   A GitHub Action to label issues, pull requests, and discussions with
   additional metadata.
 author: twsl
-
 # Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
   icon: heart

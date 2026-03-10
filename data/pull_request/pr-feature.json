@@ -1,39 +1,39 @@
 {
-	"action": "opened",
-	"number": 202,
-	"pull_request": {
-		"id": 202,
-		"number": 202,
-		"title": "Feature: Implement dark mode",
-		"body": "This PR implements dark mode support as requested in #102.\n\n## Changes\n- Added theme toggle in settings\n- Implemented dark theme CSS\n- Added user preference persistence\n- Updated documentation\n\n## Screenshots\n[Screenshots would be here]\n\n## Testing\n- Tested on Chrome, Firefox, Safari\n- Mobile responsive\n- Preference persists across sessions",
-		"state": "open",
-		"head": {
-			"ref": "feature/dark-mode",
-			"sha": "feature123abc"
-		},
-		"base": {
-			"ref": "main",
-			"sha": "main456def"
-		},
-		"changed_files": 15,
-		"additions": 523,
-		"deletions": 45,
-		"diff_url": "https://github.com/test-owner/test-repo/pull/202.diff",
-		"patch_url": "https://github.com/test-owner/test-repo/pull/202.patch",
-		"user": {
-			"login": "feature-dev"
-		},
-		"labels": [],
-		"node_id": "PR_kwDOABCD1234567891"
-	},
-	"repository": {
-		"name": "test-repo",
-		"full_name": "test-owner/test-repo",
-		"owner": {
-			"login": "test-owner"
-		}
-	},
-	"sender": {
-		"login": "feature-dev"
-	}
+  "action": "opened",
+  "number": 202,
+  "pull_request": {
+    "id": 202,
+    "number": 202,
+    "title": "Feature: Implement dark mode",
+    "body": "This PR implements dark mode support as requested in #102.\n\n## Changes\n- Added theme toggle in settings\n- Implemented dark theme CSS\n- Added user preference persistence\n- Updated documentation\n\n## Screenshots\n[Screenshots would be here]\n\n## Testing\n- Tested on Chrome, Firefox, Safari\n- Mobile responsive\n- Preference persists across sessions",
+    "state": "open",
+    "head": {
+      "ref": "feature/dark-mode",
+      "sha": "feature123abc"
+    },
+    "base": {
+      "ref": "main",
+      "sha": "main456def"
+    },
+    "changed_files": 15,
+    "additions": 523,
+    "deletions": 45,
+    "diff_url": "https://github.com/test-owner/test-repo/pull/202.diff",
+    "patch_url": "https://github.com/test-owner/test-repo/pull/202.patch",
+    "user": {
+      "login": "feature-dev"
+    },
+    "labels": [],
+    "node_id": "PR_kwDOABCD1234567891"
+  },
+  "repository": {
+    "name": "test-repo",
+    "full_name": "test-owner/test-repo",
+    "owner": {
+      "login": "test-owner"
+    }
+  },
+  "sender": {
+    "login": "feature-dev"
+  }
 }

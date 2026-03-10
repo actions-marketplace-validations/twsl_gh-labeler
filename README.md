@@ -6,11 +6,12 @@
 [![CodeQL](https://github.com/twsl/gh-labeler/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/twsl/gh-labeler/actions/workflows/codeql-analysis.yml)
 
 gh-labeler is a GitHub Action that applies labels and follow-up actions to
-issues, pull requests, and discussions based on label events and regex matches
-against the title and body.
+issues, pull requests, and discussions based on label events and regular
+expression matches against the title and body.
 
-The action is configuration-driven. You define label rules and regex rules in
-`.github/gh-labeler.yaml`, and the action handles the matching GitHub API calls.
+The action is configuration-driven. You define label rules and regular
+expression rules in `.github/gh-labeler.yaml`, and the action handles the
+matching GitHub API calls.
 
 ## What It Can Do
 
@@ -117,10 +118,11 @@ labels:
         - "A matching rule ran for this thread."
 ```
 
-### Regex Rules
+### Regular Expression Rules
 
-Use `regex` to match the title and body of newly opened or edited threads.
-Regex rules can add labels and trigger the same kinds of follow-up actions.
+Use the regular expression rules section to match the title and body of newly
+opened or edited threads. These rules can add labels and trigger the same
+kinds of follow-up actions.
 
 ```yaml
 regex:
@@ -143,8 +145,8 @@ scanTitle: true
 scanBody: true
 ```
 
-Regex rules are case-insensitive by default. Set `caseSensitive: true` inside a
-rule when you need exact casing.
+Regular expression rules are case-insensitive by default. Set
+`caseSensitive: true` inside a rule when you need exact casing.
 
 ## Supported Action Fields
 

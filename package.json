@@ -1,92 +1,92 @@
 {
-	"name": "gh-labeler",
-	"description": "GitHub Actions TypeScript template",
-	"version": "0.0.0",
-	"author": {
-		"name": "twsl",
-		"email": "45483159+twsl@users.noreply.github.com"
-	},
-	"type": "module",
-	"private": true,
-	"homepage": "https://github.com/twsl/gh-labeler",
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/twsl/gh-labeler.git"
-	},
-	"bugs": {
-		"url": "https://github.com/twsl/gh-labeler/issues"
-	},
-	"keywords": [
-		"actions",
-		"github",
-		"typescript",
-		"issues",
-		"labels",
-		"discussions",
-		"close",
-		"reopen",
-		"lock",
-		"unlock",
-		"assign",
-		"unassign",
-		"comment",
-		"delete"
-	],
-	"exports": {
-		".": "./dist/index.js"
-	},
-	"engines": {
-		"node": ">=20"
-	},
-	"scripts": {
-		"bundle": "pnpm run format && pnpm run package",
-		"coverage": "NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 pnpx jest --coverage",
-		"format": "pnpx @biomejs/biome format --write ./src ./tests",
-		"lint": "pnpx @biomejs/biome lint --write ./src ./tests",
-		"local-action": "pnpx @github/local-action . src/main.ts .env",
-		"package": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
-		"package:watch": "pnpm run package -- --watch",
-		"types": "ts-node ./scripts/types.ts",
-		"test": "NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 pnpx jest",
-		"all": "pnpm run format && pnpm run lint && pnpm run test && pnpm run coverage && pnpm run package"
-	},
-	"license": "MIT",
-	"dependencies": {
-		"@actions/core": "^3.0.0",
-		"@actions/github": "^9.0.0",
-		"@octokit/webhooks-types": "^7.6.1",
-		"joi": "^18.0.2",
-		"lodash": "^4.17.23",
-		"yaml": "^2.8.2"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "^2.4.6",
-		"@github/local-action": "^7.0.1",
-		"@jest/globals": "^30.2.0",
-		"@rollup/plugin-commonjs": "^29.0.2",
-		"@rollup/plugin-json": "^6.1.0",
-		"@rollup/plugin-node-resolve": "^16.0.3",
-		"@rollup/plugin-typescript": "^12.3.0",
-		"@types/jest": "^30.0.0",
-		"@types/js-yaml": "^4.0.9",
-		"@types/lodash": "^4.17.24",
-		"@types/node": "^25.4.0",
-		"jest": "^30.2.0",
-		"joi-to-typescript": "^4.15.0",
-		"rollup": "^4.59.0",
-		"ts-jest": "^29.4.6",
-		"ts-jest-resolver": "^2.0.1",
-		"ts-node": "^10.9.2",
-		"typescript": "^5.9.3"
-	},
-	"optionalDependencies": {
-		"@rollup/rollup-linux-x64-gnu": "^4.59.0"
-	},
-	"packageManager": "pnpm@10.32.0+sha512.9b2634bb3fed5601c33633f2d92593f506270a3963b8c51d2b2d6a828da615ce4e9deebef9614ccebbc13ac8d3c0f9c9ccceb583c69c8578436fa477dbb20d70",
-	"pnpm": {
-		"onlyBuiltDependencies": [
-			"esbuild",
-			"unrs-resolver"
-		]
-	}
+  "name": "gh-labeler",
+  "description": "GitHub Actions TypeScript template",
+  "version": "0.0.0",
+  "author": {
+    "name": "twsl",
+    "email": "45483159+twsl@users.noreply.github.com"
+  },
+  "type": "module",
+  "private": true,
+  "homepage": "https://github.com/twsl/gh-labeler",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/twsl/gh-labeler.git"
+  },
+  "bugs": {
+    "url": "https://github.com/twsl/gh-labeler/issues"
+  },
+  "keywords": [
+    "actions",
+    "github",
+    "typescript",
+    "issues",
+    "labels",
+    "discussions",
+    "close",
+    "reopen",
+    "lock",
+    "unlock",
+    "assign",
+    "unassign",
+    "comment",
+    "delete"
+  ],
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "bundle": "pnpm run format && pnpm run package",
+    "coverage": "NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 pnpx jest --coverage",
+    "format": "pnpx @biomejs/biome format --write ./src ./tests",
+    "lint": "pnpx @biomejs/biome lint --write ./src ./tests",
+    "local-action": "pnpx @github/local-action . src/main.ts .env",
+    "package": "rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "package:watch": "pnpm run package -- --watch",
+    "types": "ts-node ./scripts/types.ts",
+    "test": "NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 pnpx jest",
+    "all": "pnpm run format && pnpm run lint && pnpm run test && pnpm run coverage && pnpm run package"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@actions/core": "^3.0.0",
+    "@actions/github": "^9.0.0",
+    "@octokit/webhooks-types": "^7.6.1",
+    "joi": "^18.0.2",
+    "lodash": "^4.17.23",
+    "yaml": "^2.8.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.6",
+    "@github/local-action": "^7.0.1",
+    "@jest/globals": "^30.2.0",
+    "@rollup/plugin-commonjs": "^29.0.2",
+    "@rollup/plugin-json": "^6.1.0",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-typescript": "^12.3.0",
+    "@types/jest": "^30.0.0",
+    "@types/js-yaml": "^4.0.9",
+    "@types/lodash": "^4.17.24",
+    "@types/node": "^25.4.0",
+    "jest": "^30.2.0",
+    "joi-to-typescript": "^4.15.0",
+    "rollup": "^4.59.0",
+    "ts-jest": "^29.4.6",
+    "ts-jest-resolver": "^2.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  },
+  "optionalDependencies": {
+    "@rollup/rollup-linux-x64-gnu": "^4.59.0"
+  },
+  "packageManager": "pnpm@10.32.0+sha512.9b2634bb3fed5601c33633f2d92593f506270a3963b8c51d2b2d6a828da615ce4e9deebef9614ccebbc13ac8d3c0f9c9ccceb583c69c8578436fa477dbb20d70",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "unrs-resolver"
+    ]
+  }
 }

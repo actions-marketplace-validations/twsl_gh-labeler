@@ -1,6 +1,6 @@
 interface Milestones {
-	add?: string[];
-	remove?: string[];
+  add?: string[];
+  remove?: string[];
 }
 
 export default Milestones;

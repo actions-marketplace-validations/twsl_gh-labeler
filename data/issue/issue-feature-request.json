@@ -1,24 +1,24 @@
 {
-	"action": "opened",
-	"issue": {
-		"number": 102,
-		"title": "Feature Request: Add dark mode support",
-		"body": "It would be great to have dark mode support in the application. Many users prefer dark themes, especially for night-time usage.\n\n## Use Case\nUsers working late at night would benefit from reduced eye strain.\n\n## Proposed Solution\nAdd a toggle in settings to switch between light and dark themes.",
-		"state": "open",
-		"labels": [],
-		"user": {
-			"login": "feature-requester"
-		},
-		"node_id": "I_kwDOABCD1234567891"
-	},
-	"repository": {
-		"name": "test-repo",
-		"full_name": "test-owner/test-repo",
-		"owner": {
-			"login": "test-owner"
-		}
-	},
-	"sender": {
-		"login": "feature-requester"
-	}
+  "action": "opened",
+  "issue": {
+    "number": 102,
+    "title": "Feature Request: Add dark mode support",
+    "body": "It would be great to have dark mode support in the application. Many users prefer dark themes, especially for night-time usage.\n\n## Use Case\nUsers working late at night would benefit from reduced eye strain.\n\n## Proposed Solution\nAdd a toggle in settings to switch between light and dark themes.",
+    "state": "open",
+    "labels": [],
+    "user": {
+      "login": "feature-requester"
+    },
+    "node_id": "I_kwDOABCD1234567891"
+  },
+  "repository": {
+    "name": "test-repo",
+    "full_name": "test-owner/test-repo",
+    "owner": {
+      "login": "test-owner"
+    }
+  },
+  "sender": {
+    "login": "feature-requester"
+  }
 }

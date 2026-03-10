@@ -6,12 +6,12 @@
  */
 
 export type {
-	IssuesEvent,
-	PullRequestEvent,
-	DiscussionEvent,
-	IssuesLabeledEvent,
-	PullRequestLabeledEvent,
-	DiscussionLabeledEvent,
+  IssuesEvent,
+  PullRequestEvent,
+  DiscussionEvent,
+  IssuesLabeledEvent,
+  PullRequestLabeledEvent,
+  DiscussionLabeledEvent,
 } from "@octokit/webhooks-types";
 
 /**
@@ -26,4 +26,8 @@ export type Discussion = DiscussionEvent["discussion"];
  */
 export type GitHubThreadData = Issue | PullRequest | Discussion;
 
-import type { IssuesEvent, PullRequestEvent, DiscussionEvent } from "@octokit/webhooks-types";
+import type {
+  IssuesEvent,
+  PullRequestEvent,
+  DiscussionEvent,
+} from "@octokit/webhooks-types";

@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-This is a GitHub Action built with TypeScript that automatically labels issues, pull requests, and discussions based on regex patterns and content rules. The action provides powerful configuration-driven automation for managing GitHub repository workflows.
+This is a GitHub Action built with TypeScript that automatically labels issues, pull requests, and discussions based on regular expression patterns and content rules. The action provides powerful configuration-driven automation for managing GitHub repository workflows.
 
 ## Tech Stack
 
-- **Language**: TypeScript (ES2022 target)
+- **Language**: TypeScript (ECMAScript 2022 target)
 - **Package Manager**: pnpm
 - **Linter/Formatter**: Biome
 - **Testing**: Jest with ts-jest
@@ -15,9 +15,9 @@ This is a GitHub Action built with TypeScript that automatically labels issues, 
 
 ## Project Structure
 
-```
+```text
 src/
-  ├── handlers/          # Event handlers for issues, PRs, discussions, regex scanning
+  ├── handlers/          # Event handlers for issues, PRs, discussions, and regular expression scanning
   ├── models/            # Data models and configuration types
   ├── schemas/           # Validation schemas (likely Joi/Zod)
   ├── types/             # TypeScript type definitions
@@ -29,7 +29,7 @@ data/                    # Test fixtures and sample payloads
 ## Development Commands
 
 - `pnpm run format` - Format code with Biome
-- `pnpm run lint` - Lint and auto-fix with Biome
+- `pnpm run lint` - Lint and autofix with Biome
 - `pnpm test` - Run Jest tests
 - `pnpm run package` - Bundle with Rollup
 - `pnpm run package:watch` - Watch mode for bundling
@@ -40,7 +40,7 @@ data/                    # Test fixtures and sample payloads
 ### TypeScript Configuration
 
 - **Strict Mode**: Enabled (`strict: true`)
-- **Target**: ES2022
+- **Target**: ECMAScript 2022
 - **Module System**: ESNext with ES modules
 - **Path Aliases**: Use `@/*` for `src/*` imports
 - **Null Checks**: Strict null checks enabled
@@ -51,11 +51,11 @@ data/                    # Test fixtures and sample payloads
 
 - **Tool**: Biome (not Prettier/ESLint)
 - **Config**: See `biome.json` - `noExplicitAny` is disabled
-- **Auto-fix**: Use `pnpm run lint` or `pnpm run format` before committing
+- **Autofix**: Use `pnpm run lint` or `pnpm run format` before committing
 
 ### Naming Conventions
 
-- **Classes**: PascalCase (e.g., `IssueHandler`, `RegexHandler`)
+- **Classes**: PascalCase (e.g., `IssueHandler`, `PullRequestHandler`)
 - **Files**: camelCase for TypeScript files (e.g., `issueHandler.ts`)
 - **Interfaces/Types**: PascalCase, use `type` for unions/primitives
 - **Models**: Import with `type` keyword (e.g., `import type Config from "@/models/config"`)
@@ -198,7 +198,7 @@ try {
 2. **Async/Await**: Use async/await for all async operations
 3. **Error Messages**: Provide clear, actionable error messages
 4. **Testing**: Write tests for new handlers and validation logic
-5. **Documentation**: Update README for configuration changes
+5. **Documentation**: Update readme for configuration changes
 6. **Immutability**: Prefer const and readonly where applicable
 7. **ESM**: Use ES modules syntax throughout
 8. **No Any**: Minimize use of `any` type (already disabled in Biome)
@@ -215,7 +215,7 @@ try {
 - Never log sensitive tokens or credentials
 - Use `github-token` input for authentication
 - Validate all external input (configs, webhook payloads)
-- Be cautious with regex patterns (avoid ReDoS)
+- Be cautious with regular expression patterns (avoid ReDoS)
 
 ## Common Patterns
 
@@ -226,7 +226,7 @@ const handler = new IssueHandler(config, actionConfig);
 await handler.handle(eventPayload);
 ```
 
-### Regex Matching
+### Regular Expression Matching
 
 - Support case-insensitive matching by default
 - Use word boundaries (`\b`) for precise matching
@@ -253,5 +253,5 @@ await client.rest.issues.addLabels({
 ## Version Requirements
 
 - Node.js >= 20 (specified in package.json engines)
-- TypeScript configuration targets ES2022
+- TypeScript configuration targets ECMAScript 2022
 - GitHub Actions runtime: node20

@@ -1,31 +1,31 @@
 {
-	"action": "created",
-	"discussion": {
-		"id": 303,
-		"number": 303,
-		"title": "Announcement: Version 2.0 Released!",
-		"body": "We're excited to announce the release of version 2.0! 🎉\n\n## What's New\n- Complete rewrite in TypeScript\n- Improved performance (3x faster)\n- New configuration options\n- Better error messages\n- GraphQL support for discussions\n\n## Breaking Changes\n- Configuration file format updated\n- Minimum Node.js version is now 20\n\n## Migration Guide\nPlease see our [migration guide](https://example.com/migrate) for details.\n\nThank you to all contributors!",
-		"state": "open",
-		"category": {
-			"id": "DIC_kwDOABCD03",
-			"name": "Announcements",
-			"emoji": "📢",
-			"slug": "announcements"
-		},
-		"user": {
-			"login": "maintainer"
-		},
-		"node_id": "D_kwDOABCD1234567892",
-		"labels": []
-	},
-	"repository": {
-		"name": "test-repo",
-		"full_name": "test-owner/test-repo",
-		"owner": {
-			"login": "test-owner"
-		}
-	},
-	"sender": {
-		"login": "maintainer"
-	}
+  "action": "created",
+  "discussion": {
+    "id": 303,
+    "number": 303,
+    "title": "Announcement: Version 2.0 Released!",
+    "body": "We're excited to announce the release of version 2.0! 🎉\n\n## What's New\n- Complete rewrite in TypeScript\n- Improved performance (3x faster)\n- New configuration options\n- Better error messages\n- GraphQL support for discussions\n\n## Breaking Changes\n- Configuration file format updated\n- Minimum Node.js version is now 20\n\n## Migration Guide\nPlease see our [migration guide](https://example.com/migrate) for details.\n\nThank you to all contributors!",
+    "state": "open",
+    "category": {
+      "id": "DIC_kwDOABCD03",
+      "name": "Announcements",
+      "emoji": "📢",
+      "slug": "announcements"
+    },
+    "user": {
+      "login": "maintainer"
+    },
+    "node_id": "D_kwDOABCD1234567892",
+    "labels": []
+  },
+  "repository": {
+    "name": "test-repo",
+    "full_name": "test-owner/test-repo",
+    "owner": {
+      "login": "test-owner"
+    }
+  },
+  "sender": {
+    "login": "maintainer"
+  }
 }

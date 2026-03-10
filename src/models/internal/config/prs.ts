@@ -4,10 +4,10 @@ import type Assignees from "@/models/internal/config/assignees";
 import type Comments from "@/models/internal/config/comments";
 
 interface PRs extends Trigger, Comments {
-	reviewers?: Reviewers;
-	assignees?: Assignees;
-	close?: boolean;
-	lock?: boolean;
+  reviewers?: Reviewers;
+  assignees?: Assignees;
+  close?: boolean;
+  lock?: boolean;
 }
 
 export default PRs;
