@@ -1,2 +1,2 @@
 [codespell]
-skip = ./pnpm-lock.yaml,./coverage
+skip = ./pnpm-lock.yaml,pnpm-lock.yaml,*/pnpm-lock.yaml,./coverage,./dist

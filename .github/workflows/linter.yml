@@ -61,3 +61,23 @@ jobs:
           VALIDATE_TYPESCRIPT_STANDARD: false
           VALIDATE_CHECKOV: false
           VALIDATE_TYPESCRIPT_PRETTIER: false
+          VALIDATE_PYTHON_BLACK: false
+          VALIDATE_CSS_PRETTIER: false
+          VALIDATE_SCSS_PRETTIER: false
+          VALIDATE_SASS_PRETTIER: false
+          VALIDATE_GRAPHQL_PRETTIER: false
+          VALIDATE_HTML_PRETTIER: false
+          VALIDATE_JAVASCRIPT_PRETTIER: false
+          VALIDATE_JSON_PRETTIER: false
+          VALIDATE_JSONC_PRETTIER: false
+          VALIDATE_JSON5_PRETTIER: false
+          VALIDATE_JSX_PRETTIER: false
+          VALIDATE_VUE_PRETTIER: false
+          VALIDATE_CSS_STYLELINT: false
+          VALIDATE_SCSS_STYLELINT: false
+          VALIDATE_SASS_STYLELINT: false
+          VALIDATE_JSONC_ESLINT: false
+          VALIDATE_JSON5_ESLINT: false
+          VALIDATE_JSX_ESLINT: false
+          VALIDATE_TSX_ESLINT: false
+          VALIDATE_VUE_ESLINT: false
