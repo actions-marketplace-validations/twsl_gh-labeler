@@ -57,7 +57,7 @@
 		"@octokit/webhooks-types": "7.6.1",
 		"joi": "18.0.2",
 		"lodash": "4.17.23",
-		"yaml": "2.8.2"
+		"yaml": "2.8.3"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.7",
