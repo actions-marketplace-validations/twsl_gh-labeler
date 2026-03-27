@@ -60,7 +60,7 @@
 		"yaml": "2.8.3"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.4.7",
+		"@biomejs/biome": "2.4.8",
 		"@github/local-action": "7.0.1",
 		"@jest/globals": "30.3.0",
 		"@rollup/plugin-commonjs": "29.0.2",
@@ -73,7 +73,7 @@
 		"@types/node": "25.5.0",
 		"jest": "30.3.0",
 		"joi-to-typescript": "4.15.0",
-		"rollup": "4.59.0",
+		"rollup": "4.59.1",
 		"ts-jest": "29.4.6",
 		"ts-jest-resolver": "2.0.1",
 		"ts-node": "10.9.2",
