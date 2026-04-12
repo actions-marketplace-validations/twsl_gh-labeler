@@ -18,8 +18,8 @@ importers:
         specifier: 7.6.1
         version: 7.6.1
       joi:
-        specifier: 18.1.1
-        version: 18.1.1
+        specifier: 18.1.2
+        version: 18.1.2
       lodash:
         specifier: 4.18.1
         version: 4.18.1
@@ -65,7 +65,7 @@ importers:
         version: 30.3.0(@types/node@25.5.2)(ts-node@10.9.2(@types/node@25.5.2)(typescript@5.9.3))
       joi-to-typescript:
         specifier: 4.15.0
-        version: 4.15.0(joi@18.1.1)
+        version: 4.15.0(joi@18.1.2)
       rollup:
         specifier: 4.60.1
         version: 4.60.1
@@ -2029,8 +2029,8 @@ packages:
     peerDependencies:
       joi: 17.x
 
-  joi@18.1.1:
-    resolution: {integrity: sha512-pJkBiPtNo+o0h19LfSvUN46Y5zY+ck99AtHwch9n2HqVLNRgP0ZMyIH8FRMoP+HV8hy/+AG99dXFfwpf83iZfQ==}
+  joi@18.1.2:
+    resolution: {integrity: sha512-rF5MAmps5esSlhCA+N1b6IYHDw9j/btzGaqfgie522jS02Ju/HXBxamlXVlKEHAxoMKQL77HWI8jlqWsFuekZA==}
     engines: {node: '>= 20'}
 
   js-tokens@4.0.0:
@@ -4886,11 +4886,11 @@ snapshots:
       - supports-color
       - ts-node
 
-  joi-to-typescript@4.15.0(joi@18.1.1):
+  joi-to-typescript@4.15.0(joi@18.1.2):
     dependencies:
-      joi: 18.1.1
+      joi: 18.1.2
 
-  joi@18.1.1:
+  joi@18.1.2:
     dependencies:
       '@hapi/address': 5.1.1
       '@hapi/formula': 3.0.2
