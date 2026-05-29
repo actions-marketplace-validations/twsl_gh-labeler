@@ -70,11 +70,11 @@
 		"@types/jest": "30.0.0",
 		"@types/js-yaml": "4.0.9",
 		"@types/lodash": "4.17.24",
-		"@types/node": "25.8.0",
+		"@types/node": "25.9.1",
 		"jest": "30.4.2",
 		"joi-to-typescript": "4.15.0",
 		"rollup": "4.60.4",
-		"ts-jest": "29.4.10",
+		"ts-jest": "29.4.11",
 		"ts-jest-resolver": "2.0.1",
 		"ts-node": "10.9.2",
 		"typescript": "6.0.3"
