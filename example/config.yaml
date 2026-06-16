@@ -96,9 +96,6 @@ labels:
     question:
       comments:
         - "Thanks for your question! Consider using Discussions for Q&A."
-      issues:
-        # Convert appropriate questions to discussions
-        convert_to_discussion: true
 
     "needs info":
       comments:

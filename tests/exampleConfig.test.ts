@@ -1,10 +1,10 @@
-import { describe, it, expect } from "@jest/globals";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
+import { describe, expect, it } from "@jest/globals";
 import { parse } from "yaml";
-import configSchema from "@/schemas/config";
 import type Config from "@/models/internal/config";
+import configSchema from "@/schemas/config";
 
 describe("example config.yaml", () => {
 	const __filename = fileURLToPath(import.meta.url);
@@ -203,6 +203,15 @@ describe("example config.yaml", () => {
 			const wontfixRemove = config.labels.remove.wontfix;
 			expect(wontfixRemove?.issues?.reopen).toBe(true);
 			expect(wontfixRemove?.issues?.unlock).toBe(true);
+		}
+	});
+
+	it("should not advertise unsupported issue-to-discussion conversion", () => {
+		const fileContent = fs.readFileSync(exampleConfigPath, "utf8");
+		const config = parse(fileContent) as Config;
+
+		if (config.labels?.add && typeof config.labels.add === "object" && !Array.isArray(config.labels.add)) {
+			expect(config.labels.add.question?.issues?.convert_to_discussion).toBeUndefined();
 		}
 	});
 });

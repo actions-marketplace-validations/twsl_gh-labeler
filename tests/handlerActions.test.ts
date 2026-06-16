@@ -39,6 +39,7 @@ describe("Handler Actions with Config Inheritance", () => {
 				pulls: {
 					requestReviewers: jest.fn(),
 					removeRequestedReviewers: jest.fn(),
+					createReview: jest.fn(),
 					update: jest.fn(),
 				},
 			},
@@ -291,6 +292,111 @@ describe("Handler Actions with Config Inheritance", () => {
 				issue_number: 1,
 			});
 		});
+
+		it("should handle issue reopen", async () => {
+			const config: Config = {
+				labels: {
+					remove: {
+						wontfix: {
+							issues: {
+								reopen: true,
+							},
+						},
+					},
+				},
+			};
+
+			const handler = new IssueHandler(config, actionConfig);
+			const payload = {
+				action: "unlabeled",
+				label: { name: "wontfix" },
+			};
+			const threadData = {
+				number: 1,
+				locked: false,
+				state: "closed",
+				user: { login: "testuser" },
+				labels: [],
+			} as any;
+
+			await handler.performActions(payload, threadData);
+
+			expect(mockOctokit.rest.issues.update).toHaveBeenCalledWith({
+				owner: "test-owner",
+				repo: "test-repo",
+				issue_number: 1,
+				state: "open",
+			});
+		});
+
+		it("should handle issue unlock", async () => {
+			const config: Config = {
+				labels: {
+					remove: {
+						wontfix: {
+							issues: {
+								unlock: true,
+							},
+						},
+					},
+				},
+			};
+
+			const handler = new IssueHandler(config, actionConfig);
+			const payload = {
+				action: "unlabeled",
+				label: { name: "wontfix" },
+			};
+			const threadData = {
+				number: 1,
+				locked: true,
+				state: "open",
+				user: { login: "testuser" },
+				labels: [],
+			} as any;
+
+			await handler.performActions(payload, threadData);
+
+			expect(mockOctokit.rest.issues.unlock).toHaveBeenCalledWith({
+				owner: "test-owner",
+				repo: "test-repo",
+				issue_number: 1,
+			});
+		});
+
+		it("should handle issue unpin", async () => {
+			const config: Config = {
+				labels: {
+					add: {
+						"not-priority": {
+							issues: {
+								unpin: true,
+							},
+						},
+					},
+				},
+			};
+
+			const handler = new IssueHandler(config, actionConfig);
+			const payload = {
+				action: "labeled",
+				label: { name: "not-priority" },
+			};
+			const threadData = {
+				number: 1,
+				node_id: "issue-node-id",
+				locked: false,
+				state: "open",
+				user: { login: "testuser" },
+				labels: [],
+			} as any;
+
+			await handler.performActions(payload, threadData);
+
+			expect(mockOctokit.graphql).toHaveBeenCalledWith(expect.stringContaining("unpinIssue"), {
+				issueId: "issue-node-id",
+			});
+		});
 	});
 
 	describe("PullRequestHandler", () => {
@@ -441,6 +547,229 @@ describe("Handler Actions with Config Inheritance", () => {
 				repo: "test-repo",
 				pull_number: 1,
 				state: "closed",
+			});
+		});
+
+		it("should handle PR reopen", async () => {
+			const config: Config = {
+				labels: {
+					remove: {
+						duplicate: {
+							prs: {
+								reopen: true,
+							},
+						},
+					},
+				},
+			};
+
+			const handler = new PullRequestHandler(config, actionConfig);
+			const payload = {
+				action: "unlabeled",
+				label: { name: "duplicate" },
+			};
+			const threadData = {
+				number: 1,
+				locked: false,
+				state: "closed",
+				user: { login: "testuser" },
+				labels: [],
+			} as any;
+
+			await handler.performActions(payload, threadData);
+
+			expect(mockOctokit.rest.pulls.update).toHaveBeenCalledWith({
+				owner: "test-owner",
+				repo: "test-repo",
+				pull_number: 1,
+				state: "open",
+			});
+		});
+
+		it("should handle PR draft state", async () => {
+			const config: Config = {
+				labels: {
+					add: {
+						wip: {
+							prs: {
+								draft: true,
+							},
+						},
+					},
+				},
+			};
+
+			const handler = new PullRequestHandler(config, actionConfig);
+			const payload = {
+				action: "labeled",
+				label: { name: "wip" },
+			};
+			const threadData = {
+				number: 1,
+				node_id: "pr-node-id",
+				draft: false,
+				locked: false,
+				state: "open",
+				user: { login: "testuser" },
+				labels: [],
+			} as any;
+
+			await handler.performActions(payload, threadData);
+
+			expect(mockOctokit.graphql).toHaveBeenCalledWith(expect.stringContaining("convertPullRequestToDraft"), {
+				pullRequestId: "pr-node-id",
+			});
+		});
+
+		it("should handle PR ready for review", async () => {
+			const config: Config = {
+				labels: {
+					remove: {
+						wip: {
+							prs: {
+								draft: false,
+							},
+						},
+					},
+				},
+			};
+
+			const handler = new PullRequestHandler(config, actionConfig);
+			const payload = {
+				action: "unlabeled",
+				label: { name: "wip" },
+			};
+			const threadData = {
+				number: 1,
+				node_id: "pr-node-id",
+				draft: true,
+				locked: false,
+				state: "open",
+				user: { login: "testuser" },
+				labels: [],
+			} as any;
+
+			await handler.performActions(payload, threadData);
+
+			expect(mockOctokit.graphql).toHaveBeenCalledWith(expect.stringContaining("markPullRequestReadyForReview"), {
+				pullRequestId: "pr-node-id",
+			});
+		});
+
+		it("should create request changes and approve reviews", async () => {
+			const config: Config = {
+				labels: {
+					add: {
+						"needs-review-decision": {
+							prs: {
+								request_changes: true,
+								approve: true,
+							},
+						},
+					},
+				},
+			};
+
+			const handler = new PullRequestHandler(config, actionConfig);
+			const payload = {
+				action: "labeled",
+				label: { name: "needs-review-decision" },
+			};
+			const threadData = {
+				number: 1,
+				locked: false,
+				state: "open",
+				user: { login: "testuser" },
+				labels: [],
+			} as any;
+
+			await handler.performActions(payload, threadData);
+
+			expect(mockOctokit.rest.pulls.createReview).toHaveBeenCalledWith({
+				owner: "test-owner",
+				repo: "test-repo",
+				pull_number: 1,
+				event: "REQUEST_CHANGES",
+			});
+			expect(mockOctokit.rest.pulls.createReview).toHaveBeenCalledWith({
+				owner: "test-owner",
+				repo: "test-repo",
+				pull_number: 1,
+				event: "APPROVE",
+			});
+		});
+
+		it("should expand allReviewers to requested reviewers", async () => {
+			const config: Config = {
+				labels: {
+					remove: {
+						wip: {
+							prs: {
+								reviewers: {
+									remove: ["allReviewers"],
+								},
+							},
+						},
+					},
+				},
+			};
+
+			const handler = new PullRequestHandler(config, actionConfig);
+			const payload = {
+				action: "unlabeled",
+				label: { name: "wip" },
+			};
+			const threadData = {
+				number: 1,
+				locked: false,
+				state: "open",
+				user: { login: "testuser" },
+				requested_reviewers: [{ login: "reviewer1" }, { login: "reviewer2" }],
+				labels: [],
+			} as any;
+
+			await handler.performActions(payload, threadData);
+
+			expect(mockOctokit.rest.pulls.removeRequestedReviewers).toHaveBeenCalledWith({
+				owner: "test-owner",
+				repo: "test-repo",
+				pull_number: 1,
+				reviewers: ["reviewer1", "reviewer2"],
+			});
+		});
+
+		it("should handle PR unlock", async () => {
+			const config: Config = {
+				labels: {
+					remove: {
+						wip: {
+							prs: {
+								unlock: true,
+							},
+						},
+					},
+				},
+			};
+
+			const handler = new PullRequestHandler(config, actionConfig);
+			const payload = {
+				action: "unlabeled",
+				label: { name: "wip" },
+			};
+			const threadData = {
+				number: 1,
+				locked: true,
+				state: "open",
+				user: { login: "testuser" },
+				labels: [],
+			} as any;
+
+			await handler.performActions(payload, threadData);
+
+			expect(mockOctokit.rest.issues.unlock).toHaveBeenCalledWith({
+				owner: "test-owner",
+				repo: "test-repo",
+				issue_number: 1,
 			});
 		});
 

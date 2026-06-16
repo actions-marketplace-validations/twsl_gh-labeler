@@ -1,8 +1,16 @@
 import * as core from "@actions/core";
 import type { PullRequestEvent } from "@octokit/webhooks-types";
+import { AbstractHandler } from "@/handlers/baseHandler";
 import type PRs from "@/models/internal/config/prs";
 import type { ThreadType } from "@/types/common";
-import { AbstractHandler } from "./baseHandler";
+
+type PullRequestReviewAction = "APPROVE" | "REQUEST_CHANGES";
+type RequestedReviewer = PullRequestEvent["pull_request"]["requested_reviewers"][number];
+type RequestedUserReviewer = RequestedReviewer & { login: string };
+
+function isRequestedUserReviewer(reviewer: RequestedReviewer): reviewer is RequestedUserReviewer {
+	return "login" in reviewer && typeof reviewer.login === "string";
+}
 
 function difference<T>(left: T[], right: T[]): T[] {
 	return left.filter((item) => !right.includes(item));
@@ -105,7 +113,10 @@ export class PullRequestHandler extends AbstractHandler {
 		// Handle reviewers - remove
 		if (prActions.reviewers?.remove && prActions.reviewers.remove.length > 0) {
 			core.debug(`Removing reviewers from PR: ${prActions.reviewers.remove.join(", ")}`);
-			await this.removeReviewers(prActions.reviewers.remove, threadData.number);
+			await this.removeReviewers(
+				this.resolveReviewersToRemove(prActions.reviewers.remove, threadData),
+				threadData.number,
+			);
 		}
 
 		// Handle assignees - add
@@ -137,11 +148,57 @@ export class PullRequestHandler extends AbstractHandler {
 			});
 		}
 
+		// Handle reopen
+		if (prActions.reopen && threadData.state === "closed") {
+			core.debug("Reopening PR");
+			await this.client.rest.pulls.update({
+				owner: this.owner,
+				repo: this.repo,
+				pull_number: threadData.number,
+				state: "open",
+			});
+		}
+
+		// Handle draft status
+		if (prActions.draft !== undefined && prActions.draft !== threadData.draft) {
+			core.debug(`Updating PR draft state to ${prActions.draft}`);
+			await this.updateDraftState(threadData.node_id, prActions.draft);
+		}
+
+		// Handle review decisions
+		if (prActions.request_changes) {
+			await this.createReview(threadData.number, "REQUEST_CHANGES");
+		}
+
+		if (prActions.approve) {
+			await this.createReview(threadData.number, "APPROVE");
+		}
+
 		// Handle lock
 		if (prActions.lock && !threadData.locked) {
 			core.debug("Locking PR");
-			await this.client.rest.issues.lock(issue);
+			await this.client.rest.issues.lock(
+				prActions.lock_reason ? { ...issue, lock_reason: prActions.lock_reason } : issue,
+			);
 		}
+
+		// Handle unlock
+		if (prActions.unlock && threadData.locked) {
+			core.debug("Unlocking PR");
+			await this.client.rest.issues.unlock(issue);
+		}
+	}
+
+	private resolveReviewersToRemove(reviewers: string[], threadData: PullRequestEvent["pull_request"]): string[] {
+		if (!reviewers.includes("allReviewers")) {
+			return reviewers;
+		}
+
+		const requestedReviewers = (threadData.requested_reviewers || [])
+			.filter(isRequestedUserReviewer)
+			.map((reviewer) => reviewer.login);
+
+		return [...new Set([...without(reviewers, "allReviewers"), ...requestedReviewers])];
 	}
 
 	private async addReviewers(reviewers: string[], pullNumber: number): Promise<void> {
@@ -171,6 +228,47 @@ export class PullRequestHandler extends AbstractHandler {
 			});
 		} catch (error) {
 			this.failAction("Failed to remove reviewers", error);
+		}
+	}
+
+	private async createReview(pullNumber: number, event: PullRequestReviewAction): Promise<void> {
+		try {
+			await this.client.rest.pulls.createReview({
+				owner: this.owner,
+				repo: this.repo,
+				pull_number: pullNumber,
+				event,
+			});
+		} catch (error) {
+			this.failAction(`Failed to create ${event.toLowerCase()} review`, error);
+		}
+	}
+
+	private async updateDraftState(pullRequestId: string, draft: boolean): Promise<void> {
+		const mutation = draft
+			? `
+				mutation($pullRequestId: ID!) {
+					convertPullRequestToDraft(input: {pullRequestId: $pullRequestId}) {
+						pullRequest {
+							id
+						}
+					}
+				}
+			`
+			: `
+				mutation($pullRequestId: ID!) {
+					markPullRequestReadyForReview(input: {pullRequestId: $pullRequestId}) {
+						pullRequest {
+							id
+						}
+					}
+				}
+			`;
+
+		try {
+			await this.client.graphql(mutation, { pullRequestId });
+		} catch (error) {
+			this.failAction(`Failed to update PR draft state to ${draft}`, error);
 		}
 	}
 }

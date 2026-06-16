@@ -15,6 +15,9 @@ const config = {
 	},
 	plugins: [
 		typescript({
+			compilerOptions: {
+				sourceMap: false,
+			},
 			tsconfig: "./tsconfig.json",
 		}),
 		nodeResolve({ preferBuiltins: true }),

@@ -1,8 +1,8 @@
 import * as core from "@actions/core";
 import type { IssuesEvent } from "@octokit/webhooks-types";
+import { AbstractHandler } from "@/handlers/baseHandler";
 import type Issues from "@/models/internal/config/issues";
 import type { ThreadType } from "@/types/common";
-import { AbstractHandler } from "./baseHandler";
 
 function difference<T>(left: T[], right: T[]): T[] {
 	return left.filter((item) => !right.includes(item));
@@ -121,15 +121,32 @@ export class IssueHandler extends AbstractHandler {
 			await this.client.rest.issues.update(updateParams);
 		}
 
+		// Handle reopen
+		if (issueActions.reopen && threadData.state === "closed") {
+			core.debug("Reopening issue");
+			await this.client.rest.issues.update({
+				...issue,
+				state: "open",
+			});
+		}
+
 		// Handle lock
 		if (issueActions.lock && !threadData.locked) {
 			core.debug("Locking issue");
-			await this.client.rest.issues.lock(issue);
+			await this.client.rest.issues.lock(
+				issueActions.lock_reason ? { ...issue, lock_reason: issueActions.lock_reason } : issue,
+			);
+		}
+
+		// Handle unlock
+		if (issueActions.unlock && threadData.locked) {
+			core.debug("Unlocking issue");
+			await this.client.rest.issues.unlock(issue);
 		}
 
 		// Handle pin
 		if (issueActions.pin !== undefined) {
-			if (issueActions.pin && !threadData.locked) {
+			if (issueActions.pin) {
 				core.debug("Pinning issue");
 				// Note: Pinning requires GraphQL API
 				try {
@@ -151,11 +168,30 @@ export class IssueHandler extends AbstractHandler {
 			}
 		}
 
+		// Handle unpin
+		if (issueActions.unpin) {
+			core.debug("Unpinning issue");
+			try {
+				const mutation = `
+					mutation($issueId: ID!) {
+						unpinIssue(input: {issueId: $issueId}) {
+							issue {
+								id
+							}
+						}
+					}
+				`;
+				await this.client.graphql(mutation, {
+					issueId: threadData.node_id,
+				});
+			} catch (error) {
+				this.failAction("Failed to unpin issue", error);
+			}
+		}
+
 		// Handle convert_to_discussion
 		if (issueActions.convert_to_discussion) {
-			core.debug("Converting issue to discussion");
-			// Note: This requires GraphQL API and a category ID
-			this.failAction("Issue to discussion conversion requires a category ID and is not implemented");
+			core.warning("Skipping convert_to_discussion because discussion category IDs are not configurable yet");
 		}
 
 		// Handle milestones - add
