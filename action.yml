@@ -1,4 +1,4 @@
-name: Github Labeler
+name: gh-labeler
 description: >-
   A GitHub Action to label issues, pull requests, and discussions with
   additional metadata.
