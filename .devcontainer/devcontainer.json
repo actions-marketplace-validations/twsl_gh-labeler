@@ -3,15 +3,17 @@
 {
 	"name": "GitHub Actions (TypeScript)",
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/typescript-node:1-20-bookworm",
+	"image": "mcr.microsoft.com/devcontainers/typescript-node:24",
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
 		"ghcr.io/devcontainers/features/github-cli:1": {},
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers-extra/features/act:1": {},
 		"ghcr.io/devcontainers-extra/features/actionlint:1": {},
-		"ghcr.io/devcontainers/features/docker-in-docker:": {},
-		"ghcr.io/devcontainers/features/node:": {}
+		"ghcr.io/devcontainers/features/docker-in-docker:3": {
+			"moby": false
+		},
+		"ghcr.io/devcontainers/features/node:2": {}
 	},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
