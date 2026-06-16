@@ -48,7 +48,7 @@ jobs:
         env:
           DEFAULT_BRANCH: main
           FILTER_REGEX_EXCLUDE: >-
-            ^(dist/.*|pnpm-lock\.yaml|\.github/copilot-instructions\.md)$
+            (^|/)(dist/.*|pnpm-lock\.yaml|\.github/copilot-instructions\.md)$
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
           LINTER_RULES_PATH: ${{ github.workspace }}

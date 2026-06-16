@@ -1,47 +1,210 @@
+import type * as fsType from "node:fs";
+import type * as coreType from "@actions/core";
 import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 
-// Mock all external dependencies BEFORE importing the main module
-jest.unstable_mockModule("@actions/core", () => import("./fixtures/core"));
-jest.unstable_mockModule("@actions/github", () => import("./fixtures/github"));
-jest.unstable_mockModule("node:fs", () => import("./fixtures/fs"));
-jest.unstable_mockModule("yaml", () => ({
+type ActionConfigInput = Record<string, unknown>;
+type ValidationError = {
+	details: Array<{
+		path: Array<string | number>;
+		message: string;
+	}>;
+};
+type ValidationResult = {
+	error: ValidationError | undefined;
+	value: unknown;
+};
+type GetInputImplementation = (name: string, options?: coreType.InputOptions) => string;
+
+const getInputMock = jest.fn((_name: string, _options?: coreType.InputOptions) => "");
+
+const core = {
+	debug: jest.fn((_message: string | Error) => undefined),
+	error: jest.fn((_message: string | Error) => undefined),
+	getInput: getInputMock,
+	info: jest.fn((_message: string) => undefined),
+	setFailed: jest.fn((_message: string | Error) => undefined),
+	setOutput: jest.fn((_name: string, _value: unknown) => undefined),
+	warning: jest.fn((_message: string | Error) => undefined),
+};
+
+const github = {
+	context: {
+		payload: {},
+		repo: {
+			owner: "test-owner",
+			repo: "test-repo",
+		},
+		issue: {
+			owner: "test-owner",
+			repo: "test-repo",
+			number: 123,
+		},
+	},
+	getOctokit: jest.fn(),
+};
+
+const fs = {
+	existsSync: jest.fn<typeof fsType.existsSync>(),
+	readFileSync: jest.fn<typeof fsType.readFileSync>(),
+};
+
+const yaml = {
 	parse: jest.fn(),
+};
+
+const mockContentLabelHandlerInstance = {
+	getThreadType: jest.fn(),
+	performActions: jest.fn(),
+	performContentScanning: jest.fn(),
+};
+
+const mockIssueHandlerInstance = {
+	getThreadType: jest.fn(),
+	performActions: jest.fn(),
+};
+
+const mockPullRequestHandlerInstance = {
+	getThreadType: jest.fn(),
+	performActions: jest.fn(),
+};
+
+const mockDiscussionHandlerInstance = {
+	getThreadType: jest.fn(),
+	performActions: jest.fn(),
+};
+
+const ContentLabelHandler = jest.fn().mockImplementation(() => mockContentLabelHandlerInstance);
+const IssueHandler = jest.fn().mockImplementation(() => mockIssueHandlerInstance);
+const PullRequestHandler = jest.fn().mockImplementation(() => mockPullRequestHandlerInstance);
+const DiscussionHandler = jest.fn().mockImplementation(() => mockDiscussionHandlerInstance);
+
+const mockValidationSuccess = {
+	error: undefined,
+	value: {
+		"github-token": "test-token",
+		"config-path": "./example/config.yaml",
+		process: ["issue", "pr", "discussion"],
+	},
+};
+
+const mockValidationError = {
+	error: {
+		details: [
+			{
+				path: ["github-token"],
+				message: "github-token is required",
+			},
+		],
+	},
+	value: undefined,
+};
+
+const mockSchemaValidate = jest.fn(
+	(input: ActionConfigInput): ValidationResult => ({
+		error: undefined,
+		value: {
+			...input,
+			"config-path": input["config-path"] || ".github/gh-labeler.yaml",
+			process: Array.isArray(input.process) && input.process.length > 0 ? input.process : ["issue", "pr", "discussion"],
+		},
+	}),
+);
+
+const validateMock = jest.fn((input: ActionConfigInput, _options?: { abortEarly?: boolean }) =>
+	mockSchemaValidate(input),
+);
+
+const validation = {
+	mockValidationSuccess,
+	mockValidationError,
+	mockSchemaValidate,
+	default: {
+		validate: validateMock,
+	},
+};
+
+const mockRegexHandlerInstance = {
+	performRegexScanning: jest.fn(),
+};
+
+const RegexHandler = jest.fn().mockImplementation(() => mockRegexHandlerInstance);
+
+const mockGetInput = (implementation: GetInputImplementation) => {
+	getInputMock.mockImplementation(implementation);
+};
+
+const mockValidateActionConfig = (implementation: (input: ActionConfigInput) => ValidationResult) => {
+	validateMock.mockImplementation((input) => implementation(input));
+};
+
+// Mock all external dependencies BEFORE importing the main module
+jest.unstable_mockModule("@actions/core", () => core);
+jest.unstable_mockModule("@actions/github", () => github);
+jest.unstable_mockModule("node:fs", () => fs);
+jest.unstable_mockModule("yaml", () => yaml);
+jest.unstable_mockModule("@/handlers/issueHandler", () => ({
+	IssueHandler,
 }));
-jest.unstable_mockModule("../src/handlers/issueHandler", () =>
-	import("./fixtures/handlers").then((handlers) => ({
-		IssueHandler: handlers.IssueHandler,
-	})),
-);
-jest.unstable_mockModule("../src/handlers/pullRequestHandler", () =>
-	import("./fixtures/handlers").then((handlers) => ({
-		PullRequestHandler: handlers.PullRequestHandler,
-	})),
-);
-jest.unstable_mockModule("../src/handlers/discussionHandler", () =>
-	import("./fixtures/handlers").then((handlers) => ({
-		DiscussionHandler: handlers.DiscussionHandler,
-	})),
-);
-jest.unstable_mockModule("../src/handlers/contentLabelHandler", () =>
-	import("./fixtures/handlers").then((handlers) => ({
-		ContentLabelHandler: handlers.ContentLabelHandler,
-	})),
-);
-jest.unstable_mockModule("../src/schemas/ghActionConfig", () => import("./fixtures/validation"));
+jest.unstable_mockModule("@/handlers/pullRequestHandler", () => ({
+	PullRequestHandler,
+}));
+jest.unstable_mockModule("@/handlers/discussionHandler", () => ({
+	DiscussionHandler,
+}));
+jest.unstable_mockModule("@/handlers/contentLabelHandler", () => ({
+	ContentLabelHandler,
+}));
+jest.unstable_mockModule("@/handlers/regexHandler", () => ({
+	RegexHandler,
+}));
+jest.unstable_mockModule("@/schemas/ghActionConfig", () => validation);
 
 // Import the main module AFTER setting up mocks
 const { run } = await import("../src/main");
 
-// Import mocked modules
-const core = await import("./fixtures/core");
-const github = await import("./fixtures/github");
-const fs = await import("./fixtures/fs");
-const yaml = await import("yaml");
-const handlers = await import("./fixtures/handlers");
-const validation = await import("./fixtures/validation");
+const handlers = {
+	ContentLabelHandler,
+	DiscussionHandler,
+	IssueHandler,
+	PullRequestHandler,
+	mockContentLabelHandlerInstance,
+	mockDiscussionHandlerInstance,
+	mockIssueHandlerInstance,
+	mockPullRequestHandlerInstance,
+};
+
+const setupDefaultMocks = () => {
+	mockGetInput((name) => {
+		switch (name) {
+			case "github-token":
+				return "test-token";
+			default:
+				return "";
+		}
+	});
+	fs.existsSync.mockReturnValue(true);
+	fs.readFileSync.mockReturnValue(JSON.stringify(sampleConfig));
+	yaml.parse.mockReturnValue(sampleConfig);
+	mockValidateActionConfig((input) => validation.mockSchemaValidate(input));
+
+	mockContentLabelHandlerInstance.getThreadType.mockReturnValue("issue");
+	mockIssueHandlerInstance.getThreadType.mockReturnValue("issue");
+	mockPullRequestHandlerInstance.getThreadType.mockReturnValue("pull_request");
+	mockDiscussionHandlerInstance.getThreadType.mockReturnValue("discussion");
+
+	ContentLabelHandler.mockImplementation(() => mockContentLabelHandlerInstance);
+	IssueHandler.mockImplementation(() => mockIssueHandlerInstance);
+	PullRequestHandler.mockImplementation(() => mockPullRequestHandlerInstance);
+	DiscussionHandler.mockImplementation(() => mockDiscussionHandlerInstance);
+	RegexHandler.mockImplementation(() => mockRegexHandlerInstance);
+};
+
+const resetMocks = () => {
+	jest.clearAllMocks();
+};
+
 const { sampleConfig, configWithContentRules } = await import("./fixtures/config");
 const { createIssuePayload, createPullRequestPayload, createDiscussionPayload } = await import("./fixtures/payloads");
-const { setupDefaultMocks, resetMocks } = await import("./fixtures/testHelpers");
 const { createComplexIssuePayload, createComplexPRPayload, createComplexDiscussionPayload } = await import(
 	"./fixtures/complexPayloads"
 );
@@ -64,7 +227,7 @@ describe("main.ts", () => {
 		describe("action configuration validation", () => {
 			it("should validate action configuration with basic inputs", async () => {
 				// Arrange
-				core.getInput.mockImplementation((name: string) => {
+				mockGetInput((name) => {
 					switch (name) {
 						case "github-token":
 							return "test-token";
@@ -96,7 +259,7 @@ describe("main.ts", () => {
 
 			it("should validate action configuration with process input", async () => {
 				// Arrange
-				core.getInput.mockImplementation((name: string) => {
+				mockGetInput((name) => {
 					switch (name) {
 						case "github-token":
 							return "test-token";
@@ -252,7 +415,7 @@ describe("main.ts", () => {
 
 			it("should handle issue opened event", async () => {
 				// Arrange
-				core.getInput.mockImplementation((name: string) => {
+				mockGetInput((name) => {
 					switch (name) {
 						case "github-token":
 							return "test-token";
@@ -377,6 +540,23 @@ describe("main.ts", () => {
 				// Assert
 				expect(core.info).toHaveBeenCalledWith("No issue, pull request or discussion found in payload");
 				expect(handlers.ContentLabelHandler).not.toHaveBeenCalled();
+			});
+
+			it("should return when thread data disappears after content payload detection", async () => {
+				const payload: Record<string, unknown> = { action: "opened" };
+				Object.defineProperty(payload, "issue", {
+					configurable: true,
+					get: () => {
+						delete payload.issue;
+						return { number: 123 };
+					},
+				});
+				github.context.payload = payload;
+
+				await run();
+
+				expect(handlers.ContentLabelHandler).not.toHaveBeenCalled();
+				expect(mockRegexHandlerInstance.performRegexScanning).not.toHaveBeenCalled();
 			});
 		});
 
@@ -521,13 +701,152 @@ describe("main.ts", () => {
 				(yaml.parse as jest.Mock).mockReturnValue(configWithContentRules);
 			});
 
+			it("should process content events when no process filter is configured", async () => {
+				validation.default.validate.mockReturnValueOnce({
+					error: undefined,
+					value: {
+						"github-token": "test-token",
+						"config-path": "./example/config.yaml",
+						process: undefined,
+					},
+				});
+				const issuePayload = createIssuePayload("opened");
+				github.context.payload = issuePayload;
+				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("issue");
+
+				await run();
+
+				expect(handlers.ContentLabelHandler).toHaveBeenCalledWith(
+					configWithContentRules,
+					expect.objectContaining({ process: undefined }),
+					"issue",
+				);
+				expect(handlers.mockContentLabelHandlerInstance.performContentScanning).toHaveBeenCalledWith(
+					issuePayload.issue,
+				);
+			});
+
+			it("should skip issue content processing excluded by process input", async () => {
+				validation.default.validate.mockReturnValueOnce({
+					error: undefined,
+					value: {
+						"github-token": "test-token",
+						"config-path": "./example/config.yaml",
+						process: ["pr", "discussion"],
+					},
+				});
+				github.context.payload = createIssuePayload("opened");
+
+				await run();
+
+				expect(core.info).toHaveBeenCalledWith(
+					"Skipping issue content processing because it is excluded by the process input",
+				);
+				expect(handlers.ContentLabelHandler).not.toHaveBeenCalled();
+			});
+
+			it("should skip pull request content processing excluded by process input", async () => {
+				validation.default.validate.mockReturnValueOnce({
+					error: undefined,
+					value: {
+						"github-token": "test-token",
+						"config-path": "./example/config.yaml",
+						process: ["issue", "discussion"],
+					},
+				});
+				github.context.payload = createPullRequestPayload("opened");
+
+				await run();
+
+				expect(core.info).toHaveBeenCalledWith(
+					"Skipping pull request content processing because it is excluded by the process input",
+				);
+				expect(handlers.ContentLabelHandler).not.toHaveBeenCalled();
+			});
+
+			it("should skip discussion content processing excluded by process input", async () => {
+				validation.default.validate.mockReturnValueOnce({
+					error: undefined,
+					value: {
+						"github-token": "test-token",
+						"config-path": "./example/config.yaml",
+						process: ["issue", "pr"],
+					},
+				});
+				github.context.payload = createDiscussionPayload("opened");
+
+				await run();
+
+				expect(core.info).toHaveBeenCalledWith(
+					"Skipping discussion content processing because it is excluded by the process input",
+				);
+				expect(handlers.ContentLabelHandler).not.toHaveBeenCalled();
+			});
+
+			it("should skip issue label processing excluded by process input", async () => {
+				validation.default.validate.mockReturnValueOnce({
+					error: undefined,
+					value: {
+						"github-token": "test-token",
+						"config-path": "./example/config.yaml",
+						process: ["pr", "discussion"],
+					},
+				});
+				github.context.payload = createIssuePayload("labeled", undefined, { name: "bug" });
+
+				await run();
+
+				expect(core.info).toHaveBeenCalledWith(
+					"Skipping issue label processing because it is excluded by the process input",
+				);
+				expect(handlers.IssueHandler).not.toHaveBeenCalled();
+			});
+
+			it("should skip pull request label processing excluded by process input", async () => {
+				validation.default.validate.mockReturnValueOnce({
+					error: undefined,
+					value: {
+						"github-token": "test-token",
+						"config-path": "./example/config.yaml",
+						process: ["issue", "discussion"],
+					},
+				});
+				github.context.payload = createPullRequestPayload("labeled", undefined, { name: "enhancement" });
+
+				await run();
+
+				expect(core.info).toHaveBeenCalledWith(
+					"Skipping pull request label processing because it is excluded by the process input",
+				);
+				expect(handlers.PullRequestHandler).not.toHaveBeenCalled();
+			});
+
+			it("should skip discussion label processing excluded by process input", async () => {
+				validation.default.validate.mockReturnValueOnce({
+					error: undefined,
+					value: {
+						"github-token": "test-token",
+						"config-path": "./example/config.yaml",
+						process: ["issue", "pr"],
+					},
+				});
+				github.context.payload = createDiscussionPayload("labeled", undefined, { name: "question" });
+
+				await run();
+
+				expect(core.info).toHaveBeenCalledWith(
+					"Skipping discussion label processing because it is excluded by the process input",
+				);
+				expect(handlers.DiscussionHandler).not.toHaveBeenCalled();
+			});
+
 			it("should prioritize content scanning over label-based actions", async () => {
 				// Arrange - payload that matches both content scanning and label-based actions
 				const issuePayload = createIssuePayload("opened", undefined, {
 					name: "bug",
 				});
 				// Add label to make it eligible for label-based actions too
-				issuePayload.label = { name: "bug" };
+				(issuePayload as { label?: { name: string } }).label = { name: "bug" };
 				github.context.payload = issuePayload;
 				handlers.mockContentLabelHandlerInstance.getThreadType.mockReturnValue("issue");
 
@@ -677,7 +996,7 @@ describe("main.ts", () => {
 				// Arrange
 				const issuePayload = createIssuePayload("labeled");
 				const payloadWithoutLabel = { ...issuePayload };
-				payloadWithoutLabel.label = undefined; // Remove label data
+				(payloadWithoutLabel as { label?: unknown }).label = undefined; // Remove label data
 				github.context.payload = payloadWithoutLabel;
 
 				// Act
@@ -689,7 +1008,7 @@ describe("main.ts", () => {
 
 			it("should handle trimmed process input correctly", async () => {
 				// Arrange
-				core.getInput.mockImplementation((name: string) => {
+				mockGetInput((name) => {
 					switch (name) {
 						case "github-token":
 							return "test-token";
@@ -892,7 +1211,10 @@ describe("main.ts", () => {
 						{ name: "critical", color: "ff0000" },
 					],
 				});
-				complexIssuePayload.label = { name: "critical", color: "ff0000" };
+				(complexIssuePayload as { label?: { name: string; color: string } }).label = {
+					name: "critical",
+					color: "ff0000",
+				};
 				github.context.payload = complexIssuePayload;
 				handlers.mockIssueHandlerInstance.getThreadType.mockReturnValue("issue");
 
@@ -921,7 +1243,7 @@ describe("main.ts", () => {
 
 			it("should handle basic input configuration", async () => {
 				// Arrange
-				core.getInput.mockImplementation(testInputConfigs.basic);
+				mockGetInput(testInputConfigs.basic);
 				validation.default.validate.mockReturnValue({
 					error: undefined,
 					value: {
@@ -947,7 +1269,7 @@ describe("main.ts", () => {
 
 			it("should handle input configuration with process filter", async () => {
 				// Arrange
-				core.getInput.mockImplementation(testInputConfigs.withProcess);
+				mockGetInput(testInputConfigs.withProcess);
 				validation.default.validate.mockReturnValue({
 					error: undefined,
 					value: {
@@ -973,7 +1295,7 @@ describe("main.ts", () => {
 
 			it("should handle complex process input with spaces", async () => {
 				// Arrange
-				core.getInput.mockImplementation(testInputConfigs.withComplexProcess);
+				mockGetInput(testInputConfigs.withComplexProcess);
 				validation.default.validate.mockReturnValue({
 					error: undefined,
 					value: {
@@ -999,7 +1321,7 @@ describe("main.ts", () => {
 
 			it("should handle empty process input", async () => {
 				// Arrange
-				core.getInput.mockImplementation(testInputConfigs.emptyProcess);
+				mockGetInput(testInputConfigs.emptyProcess);
 				validation.default.validate.mockReturnValue({
 					error: undefined,
 					value: {
@@ -1050,7 +1372,7 @@ describe("main.ts", () => {
 
 			it("should handle file not found with custom path", async () => {
 				// Arrange
-				core.getInput.mockImplementation((name: string) => {
+				mockGetInput((name) => {
 					switch (name) {
 						case "github-token":
 							return "test-token";

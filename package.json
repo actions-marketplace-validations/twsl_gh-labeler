@@ -41,10 +41,10 @@
 	"scripts": {
 		"bundle": "pnpm run format && pnpm run package",
 		"coverage": "NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 pnpx jest --coverage",
-		"format": "pnpx @biomejs/biome format --write .devcontainer .vscode biome.json data package.json jest.config.js rollup.config.ts script src tests tsconfig.base.json tsconfig.json",
+		"format": "pnpx @biomejs/biome format --write .devcontainer .vscode biome.json data package.json jest.config.js rollup.config.js script src tests tsconfig.base.json tsconfig.json",
 		"lint": "pnpx @biomejs/biome lint --write ./src ./tests",
 		"local-action": "pnpx @github/local-action . src/main.ts .env",
-		"package": "rollup --config rollup.config.ts",
+		"package": "rollup --config rollup.config.js",
 		"package:watch": "pnpm run package -- --watch",
 		"types": "ts-node ./scripts/types.ts",
 		"test": "NODE_OPTIONS=--experimental-vm-modules NODE_NO_WARNINGS=1 pnpx jest",

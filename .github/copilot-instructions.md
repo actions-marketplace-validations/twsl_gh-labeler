@@ -80,24 +80,24 @@ jest.mock("@actions/core");
 jest.mock("@actions/github");
 
 describe("HandlerName", () => {
-  let handler: HandlerName;
-  let mockConfig: Config;
-  let mockActionConfig: GHActionConfig;
+	let handler: HandlerName;
+	let mockConfig: Config;
+	let mockActionConfig: GHActionConfig;
 
-  beforeEach(() => {
-    // Setup mocks
-    mockConfig = {
-      /* ... */
-    } as Config;
-    mockActionConfig = {
-      /* ... */
-    };
-    handler = new HandlerName(mockConfig, mockActionConfig);
-  });
+	beforeEach(() => {
+		// Setup mocks
+		mockConfig = {
+			/* ... */
+		} as Config;
+		mockActionConfig = {
+			/* ... */
+		};
+		handler = new HandlerName(mockConfig, mockActionConfig);
+	});
 
-  it("should describe expected behavior", async () => {
-    // Test implementation
-  });
+	it("should describe expected behavior", async () => {
+		// Test implementation
+	});
 });
 ```
 
@@ -181,10 +181,10 @@ Handle these GitHub webhook events:
 
 ```typescript
 try {
-  // Action logic
+	// Action logic
 } catch (e: unknown) {
-  core.setFailed(`Error message: ${e}`);
-  throw e;
+	core.setFailed(`Error message: ${e}`);
+	throw e;
 }
 ```
 
@@ -244,10 +244,10 @@ await handler.handle(eventPayload);
 
 ```typescript
 await client.rest.issues.addLabels({
-  owner,
-  repo,
-  issue_number,
-  labels: ["label1", "label2"],
+	owner,
+	repo,
+	issue_number,
+	labels: ["label1", "label2"],
 });
 ```
 
