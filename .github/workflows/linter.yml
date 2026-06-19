@@ -21,12 +21,12 @@ jobs:
     steps:
       - name: Checkout
         id: checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.3
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@v6.0.8
         name: Install pnpm
         with:
           run_install: false
@@ -44,7 +44,7 @@ jobs:
 
       - name: Lint Codebase
         id: super-linter
-        uses: super-linter/super-linter/slim@v8
+        uses: super-linter/super-linter/slim@v8.6.0
         env:
           DEFAULT_BRANCH: main
           FILTER_REGEX_EXCLUDE: >-
