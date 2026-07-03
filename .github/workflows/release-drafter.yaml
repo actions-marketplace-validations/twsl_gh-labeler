@@ -19,7 +19,7 @@ jobs:
 
     steps:
       # Drafts your next Release notes as Pull Requests are merged into "main"
-      - uses: release-drafter/release-drafter@v7.4.0
+      - uses: release-drafter/release-drafter@v7.5.1
         with:
           config-name: release-drafter.yaml
         env:
