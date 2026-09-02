@@ -1,6 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, jest, mock } from "bun:test";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 // Mock dependencies before imports
 const mockContext = {
@@ -11,7 +11,7 @@ const mockContext = {
 	payload: {} as any,
 };
 
-jest.unstable_mockModule("@actions/core", () => ({
+mock.module("@actions/core", () => ({
 	debug: jest.fn(),
 	info: jest.fn(),
 	warning: jest.fn(),
@@ -19,7 +19,7 @@ jest.unstable_mockModule("@actions/core", () => ({
 	getInput: jest.fn(),
 }));
 
-jest.unstable_mockModule("@actions/github", () => ({
+mock.module("@actions/github", () => ({
 	getOctokit: jest.fn(),
 	context: mockContext,
 }));

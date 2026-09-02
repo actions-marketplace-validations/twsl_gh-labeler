@@ -175,21 +175,25 @@ discussion conversion.
 
 ## Development
 
-This repository uses TypeScript, pnpm, Jest, Rollup, and Biome.
+This repository uses TypeScript, Bun, and Biome.
 
 ### Commands
 
 | Command             | Purpose                                             |
 | ------------------- | --------------------------------------------------- |
-| `pnpm run format`   | Format repository code and config files with Biome. |
-| `pnpm run lint`     | Run Biome linting.                                  |
-| `pnpm test`         | Run the Jest test suite.                            |
-| `pnpm run coverage` | Run tests with coverage reporting.                  |
-| `pnpm run package`  | Build the action bundle into `dist/`.               |
-| `pnpm run all`      | Format, lint, test, collect coverage, and package.  |
+| `bun run format`    | Format repository code and config files with Biome. |
+| `bun run lint`      | Run Biome linting.                                  |
+| `bun run test`      | Run the Bun test suite.                             |
+| `bun run coverage`  | Run tests with coverage reporting.                  |
+| `bun run package`   | Build the action bundle into `dist/`.               |
+| `bun run all`       | Format, lint, test, collect coverage, and package.  |
 
-`dist/` is intentionally not committed on `main`. Local CI builds the bundle
-before invoking `uses: ./`.
+Install dependencies with `bun install --frozen-lockfile`. The generated
+`dist/` bundle is committed because GitHub executes `dist/index.js` directly
+when consumers reference this action. CI rebuilds the bundle and fails if the
+committed output is stale. A push to `main` that changes the source or build
+toolchain also opens or updates an automated distribution-sync pull request
+when needed.
 
 ### Local Validation
 
@@ -197,7 +201,7 @@ Use the local action runner when you want to exercise the action without pushing
 to GitHub.
 
 ```bash
-pnpx @github/local-action . src/main.ts .env
+bun run local-action
 ```
 
 ## Release Process
@@ -212,12 +216,10 @@ The script:
 3. Creates the version tag and updates the major version tag.
 4. Pushes the tags and, for new majors, creates a matching `releases/vX` branch.
 
-After the tag is pushed, the `Publish Release Refs` workflow builds `dist/` from
-that tagged source commit, force-updates the `vX.Y.Z` tag to the bundled
-commit, refreshes the matching `releases/vX` branch, and then uses
-`twsl/gha-manage-version-tags` to publish the `vX` and `vX.Y` tags from that
-bundled release tag. This keeps build artifacts out of `main` while still
-publishing runnable action refs.
+Before a tag is pushed, rebuild and commit `dist/` with `bun run package`.
+The release workflow verifies that the committed bundle is current, uploads it
+as a release asset, and uses `twsl/gha-manage-version-tags` to publish the
+matching `vX` and `vX.Y` tags.
 
 ## Testing Notes
 

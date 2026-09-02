@@ -1,4 +1,4 @@
-import { jest } from "@jest/globals";
+import { jest } from "bun:test";
 import type { DiscussionEvent, IssuesEvent, PullRequestEvent } from "@octokit/webhooks-types";
 
 // Common test input configurations

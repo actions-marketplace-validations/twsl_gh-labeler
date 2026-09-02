@@ -10,8 +10,6 @@ on:
 
 permissions:
   contents: read
-  packages: read
-  statuses: write
 
 jobs:
   lint:
@@ -26,21 +24,23 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v6.0.10
-        name: Install pnpm
-        with:
-          run_install: false
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Setup Node.js
         id: setup-node
         uses: actions/setup-node@v7.0.0
         with:
           node-version-file: .node-version
-          cache: pnpm
+          cache: bun
 
       - name: Install Dependencies
         id: install
-        run: pnpm install
+        run: bun install --frozen-lockfile
+
+      - name: Lint TypeScript
+        id: biome
+        run: bun run lint
 
       - name: Lint Codebase
         id: super-linter
@@ -48,9 +48,8 @@ jobs:
         env:
           DEFAULT_BRANCH: main
           FILTER_REGEX_EXCLUDE: >-
-            (^|/)(dist/.*|pnpm-lock\.yaml|\.github/copilot-instructions\.md)$
+            (^|/)(dist/.*|bun\.lock|\.github/copilot-instructions\.md)$
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VALIDATE_GITHUB_ACTIONS_ZIZMOR: false
           LINTER_RULES_PATH: ${{ github.workspace }}
           VALIDATE_ALL_CODEBASE: true
           VALIDATE_JAVASCRIPT_ES: false

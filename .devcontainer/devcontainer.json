@@ -10,6 +10,7 @@
 		"ghcr.io/devcontainers/features/git:1": {},
 		"ghcr.io/devcontainers-extra/features/act:1": {},
 		"ghcr.io/devcontainers-extra/features/actionlint:1": {},
+		"ghcr.io/devcontainers-extra/features/bun:1": {},
 		"ghcr.io/devcontainers/features/docker-in-docker:": {
 			"moby": false
 		},
@@ -18,9 +19,9 @@
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "npm install -g npm@latest corepack@latest --force && corepack enable pnpm && corepack install",
+	"postCreateCommand": "bun install --frozen-lockfile",
 	// Use 'postCreateCommand' to run commands after the container is started.
-	"postStartCommand": "corepack use pnpm@latest && pnpm install",
+	"postStartCommand": "bun install --frozen-lockfile",
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {

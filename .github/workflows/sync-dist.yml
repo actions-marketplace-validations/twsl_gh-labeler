@@ -1,0 +1,70 @@
+name: Synchronize Distribution
+
+"on":
+  push:
+    branches:
+      - main
+    paths:
+      - src/**
+      - tsconfig.json
+      - tsconfig.base.json
+      - package.json
+      - bun.lock
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sync-dist-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sync-dist:
+    name: Synchronize generated distribution
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: bun
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build distribution
+        run: bun run package
+
+      - name: Check distribution changes
+        id: dist-changed
+        run: |
+          if git diff --quiet -- dist/; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create or update distribution pull request
+        if: steps.dist-changed.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/update-dist
+          delete-branch: true
+          commit-message: "build: synchronize distribution"
+          title: "build: synchronize distribution"
+          body: |
+            Regenerates the committed GitHub Action distribution after source or toolchain changes.
+          labels: automated
+          add-paths: |
+            dist/**

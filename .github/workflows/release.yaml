@@ -13,30 +13,31 @@ jobs:
       contents: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6.0.10
-        with:
-          run_install: false
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Setup Node.js
         id: setup-node
-        uses: actions/setup-node@v7.0.0
+        uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
-          package-manager-cache: false
+          cache: bun
 
       - name: Install Dependencies
-        id: pnpm-ci
-        run: pnpm install
+        id: bun-install
+        run: bun install --frozen-lockfile
 
       - name: Build
-        id: pnpm-build
-        run: pnpm run package
+        id: bun-build
+        run: bun run package
+
+      - name: Verify committed distribution
+        run: git diff --exit-code -- dist/
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
@@ -54,11 +55,12 @@ jobs:
 
   upload-packages:
     runs-on: ["ubuntu-latest"]
-    permissions: write-all
+    permissions:
+      contents: write
     needs: release
     steps:
       - name: Checkout
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@v7
 
       - name: Download artifacts
         uses: actions/download-artifact@v8
@@ -67,7 +69,6 @@ jobs:
           path: dist/
 
       - name: Upload to release
-        uses: softprops/action-gh-release@v3.0.2
-        if: startsWith(github.event.ref, 'refs/tags') || github.event_name == 'release'
+        uses: softprops/action-gh-release@v3
         with:
           files: dist/*

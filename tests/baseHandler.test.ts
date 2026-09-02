@@ -1,14 +1,14 @@
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest, mock } from "bun:test";
 
 // Mock dependencies BEFORE importing
-jest.unstable_mockModule("@actions/core", () => ({
+mock.module("@actions/core", () => ({
 	debug: jest.fn(),
 	info: jest.fn(),
 	warning: jest.fn(),
 	setFailed: jest.fn(),
 }));
 
-jest.unstable_mockModule("@actions/github", () => ({
+mock.module("@actions/github", () => ({
 	getOctokit: jest.fn(() => ({
 		rest: {
 			issues: {
@@ -94,6 +94,12 @@ describe("AbstractHandler / BaseHandler", () => {
 			expect(handler).toBeDefined();
 			expect(github.getOctokit).toHaveBeenCalledWith("test-token");
 		});
+	});
+
+	it("returns the configured action settings", async () => {
+		handler = new TestHandler(mockConfig, mockActionConfig);
+
+		expect(await (handler as any).getActionConfig()).toEqual(mockActionConfig);
 	});
 
 	describe("getLabelActions", () => {

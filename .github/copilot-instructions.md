@@ -7,10 +7,10 @@ This is a GitHub Action built with TypeScript that automatically labels issues, 
 ## Tech Stack
 
 - **Language**: TypeScript (ECMAScript 2022 target)
-- **Package Manager**: pnpm
+- **Package Manager**: Bun
 - **Linter/Formatter**: Biome
-- **Testing**: Jest with ts-jest
-- **Bundler**: Rollup
+- **Testing**: Bun test runner
+- **Bundler**: Bun
 - **Runtime**: Node.js >= 20
 
 ## Project Structure
@@ -22,18 +22,18 @@ src/
   ├── schemas/           # Validation schemas (likely Joi/Zod)
   ├── types/             # TypeScript type definitions
   └── validators/        # Custom validation logic
-tests/                   # Jest test files
+tests/                   # Bun test files
 data/                    # Test fixtures and sample payloads
 ```
 
 ## Development Commands
 
-- `pnpm run format` - Format code with Biome
-- `pnpm run lint` - Lint and autofix with Biome
-- `pnpm test` - Run Jest tests
-- `pnpm run package` - Bundle with Rollup
-- `pnpm run package:watch` - Watch mode for bundling
-- `pnpm run all` - Run format, lint, test, coverage, and package
+- `bun run format` - Format code with Biome
+- `bun run lint` - Lint and autofix with Biome
+- `bun run test` - Run Bun tests
+- `bun run package` - Bundle with Bun
+- `bun run package:watch` - Watch mode for bundling
+- `bun run all` - Run format, lint, test, coverage, and package
 
 ## Code Style & Conventions
 
@@ -51,7 +51,7 @@ data/                    # Test fixtures and sample payloads
 
 - **Tool**: Biome (not Prettier/ESLint)
 - **Config**: See `biome.json` - `noExplicitAny` is disabled
-- **Autofix**: Use `pnpm run lint` or `pnpm run format` before committing
+- **Autofix**: Use `bun run lint` or `bun run format` before committing
 
 ### Naming Conventions
 
@@ -73,7 +73,7 @@ data/                    # Test fixtures and sample payloads
 ### Testing Patterns
 
 ```typescript
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { describe, it, expect, beforeEach, jest } from "bun:test";
 
 // Mock external dependencies
 jest.mock("@actions/core");
@@ -103,7 +103,7 @@ describe("HandlerName", () => {
 
 ### Test Coverage
 
-- Run tests: `pnpm test`
+- Run tests: `bun run test`
 - Tests should cover handlers, validation logic, and configuration processing
 - Use spies for verifying GitHub API calls
 - Mock `@actions/core` and `@actions/github` in tests
@@ -162,18 +162,18 @@ Handle these GitHub webhook events:
 
 ## Build & Bundling
 
-### Rollup Configuration
+### Bun Bundling
 
-- Entry: `src/main.ts`
+- Entry: `src/index.ts`
 - Output: `dist/index.js`
-- Uses `@rollup/plugin-typescript`
+- Uses Bun's native bundler with Node-compatible ESM output and external sourcemaps
 - Action runs with: `using: node20` in `action.yml`
 
 ### Production Bundle
 
-- Always run `pnpm run package` before committing
+- Always run `bun run package` before committing
 - Bundled output must be committed to `dist/`
-- Verify bundle with `check-dist` workflow
+- CI verifies that the committed bundle is current
 
 ## Error Handling
 

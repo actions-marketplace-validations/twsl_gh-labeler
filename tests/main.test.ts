@@ -1,6 +1,6 @@
+import { afterEach, beforeEach, describe, expect, it, jest, mock } from "bun:test";
 import type * as fsType from "node:fs";
 import type * as coreType from "@actions/core";
-import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
 
 type ActionConfigInput = Record<string, unknown>;
 type ValidationError = {
@@ -138,26 +138,26 @@ const mockValidateActionConfig = (implementation: (input: ActionConfigInput) => 
 };
 
 // Mock all external dependencies BEFORE importing the main module
-jest.unstable_mockModule("@actions/core", () => core);
-jest.unstable_mockModule("@actions/github", () => github);
-jest.unstable_mockModule("node:fs", () => fs);
-jest.unstable_mockModule("yaml", () => yaml);
-jest.unstable_mockModule("@/handlers/issueHandler", () => ({
+mock.module("@actions/core", () => core);
+mock.module("@actions/github", () => github);
+mock.module("node:fs", () => fs);
+mock.module("yaml", () => yaml);
+mock.module("@/handlers/issueHandler", () => ({
 	IssueHandler,
 }));
-jest.unstable_mockModule("@/handlers/pullRequestHandler", () => ({
+mock.module("@/handlers/pullRequestHandler", () => ({
 	PullRequestHandler,
 }));
-jest.unstable_mockModule("@/handlers/discussionHandler", () => ({
+mock.module("@/handlers/discussionHandler", () => ({
 	DiscussionHandler,
 }));
-jest.unstable_mockModule("@/handlers/contentLabelHandler", () => ({
+mock.module("@/handlers/contentLabelHandler", () => ({
 	ContentLabelHandler,
 }));
-jest.unstable_mockModule("@/handlers/regexHandler", () => ({
+mock.module("@/handlers/regexHandler", () => ({
 	RegexHandler,
 }));
-jest.unstable_mockModule("@/schemas/ghActionConfig", () => validation);
+mock.module("@/schemas/ghActionConfig", () => validation);
 
 // Import the main module AFTER setting up mocks
 const { run } = await import("../src/main");

@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeEach, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest, mock } from "bun:test";
 
 // Mock dependencies BEFORE importing
-jest.unstable_mockModule("@actions/core", () => ({
+mock.module("@actions/core", () => ({
 	debug: jest.fn(),
 	info: jest.fn(),
 	warning: jest.fn(),
 	setFailed: jest.fn(),
 }));
 
-jest.unstable_mockModule("@actions/github", () => ({
+mock.module("@actions/github", () => ({
 	getOctokit: jest.fn(() => ({
 		rest: {
 			issues: {
@@ -28,6 +28,7 @@ jest.unstable_mockModule("@actions/github", () => ({
 
 // Now import after mocking
 const { RegexHandler } = await import("@/handlers/regexHandler");
+
 import type Config from "@/models/internal/config";
 import type GHActionConfig from "@/models/internal/ghActionConfig";
 
@@ -58,6 +59,10 @@ describe("RegexHandler", () => {
 		};
 
 		regexHandler = new RegexHandler(mockConfig, mockActionConfig);
+	});
+
+	it("reports the issue thread type", () => {
+		expect(regexHandler.getThreadType()).toBe("issue");
 	});
 
 	describe("findMatchingRegexLabels", () => {
@@ -176,6 +181,59 @@ describe("RegexHandler", () => {
 			await regexHandler.performRegexScanning(threadData, "issue");
 
 			expect(addLabelsSpy).not.toHaveBeenCalled();
+		});
+	});
+
+	describe("performActions", () => {
+		it("delegates matching issue labels", async () => {
+			const threadData = { number: 1, title: "bug", body: "", labels: [] };
+			const issueHandler = (regexHandler as any).issueHandler;
+			const performActions = jest.spyOn(issueHandler, "performActions");
+
+			await regexHandler.performActions({ issue: {}, label: { name: "x" } }, threadData as any);
+
+			expect(performActions).toHaveBeenCalledWith(
+				expect.objectContaining({ action: "labeled", label: { name: "bug" } }),
+				threadData,
+			);
+		});
+
+		it("delegates matching pull request and discussion labels", async () => {
+			const threadData = { number: 1, title: "bug", body: "", labels: [] };
+			const pullRequestPerformActions = jest.spyOn((regexHandler as any).pullRequestHandler, "performActions");
+			const discussionPerformActions = jest.spyOn((regexHandler as any).discussionHandler, "performActions");
+
+			await regexHandler.performActions({ pull_request: {}, label: { name: "x" } }, threadData as any);
+			await regexHandler.performActions({ discussion: {}, label: { name: "x" } }, threadData as any);
+
+			expect(pullRequestPerformActions).toHaveBeenCalled();
+			expect(discussionPerformActions).toHaveBeenCalled();
+		});
+
+		it("ignores payloads without a thread", async () => {
+			const performActions = jest.spyOn((regexHandler as any).issueHandler, "performActions");
+			await regexHandler.performActions({ label: { name: "x" } }, { number: 1, title: "bug", body: "" } as any);
+
+			expect(performActions).not.toHaveBeenCalled();
+		});
+
+		it("supports fallback labels and skips invalid patterns", async () => {
+			const handler = new RegexHandler(
+				{
+					regex: {
+						"[": { labels: { add: ["ignored"] } },
+						"\\bbug\\b": {},
+						"\\bfeature\\b": { caseSensitive: true, issues: { labels: { add: ["feature"] } } },
+					},
+				} as Config,
+				mockActionConfig,
+			);
+			const labels = await (handler as any).findMatchingRegexLabels(
+				{ title: "BUG feature", body: "", labels: [] },
+				"issue",
+			);
+
+			expect(labels).toEqual(["\\bbug\\b", "feature"]);
 		});
 	});
 });

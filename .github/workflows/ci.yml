@@ -19,41 +19,43 @@ jobs:
     steps:
       - name: Checkout
         id: checkout
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v6.0.10
-        name: Install pnpm
-        with:
-          run_install: false
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Setup Node.js
         id: setup-node
-        uses: actions/setup-node@v7.0.0
+        uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
-          cache: pnpm
+          cache: bun
 
       - name: Install Dependencies
-        id: pnpm-ci
-        run: pnpm install
+        id: bun-install
+        run: bun install --frozen-lockfile
 
       - name: Check Format
-        id: pnpm-format-check
-        run: pnpm run format
+        id: bun-format-check
+        run: bun run format
 
       - name: Lint
-        id: pnpm-lint
-        run: pnpm run lint
+        id: bun-lint
+        run: bun run lint
 
       - name: Test
-        id: pnpm-test
-        run: pnpm run test
+        id: bun-test
+        run: bun run test
 
       - name: Build
-        id: pnpm-build
-        run: pnpm run package
+        id: bun-build
+        run: bun run package
+
+      - name: Verify committed distribution
+        id: verify-dist
+        run: git diff --exit-code -- dist/
 
   test-action:
     name: GitHub Actions Test
@@ -62,29 +64,27 @@ jobs:
     steps:
       - name: Checkout
         id: checkout
-        uses: actions/checkout@v7.0.1
+        uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v6.0.10
-        name: Install pnpm
-        with:
-          run_install: false
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Setup Node.js
         id: setup-node
-        uses: actions/setup-node@v7.0.0
+        uses: actions/setup-node@v7
         with:
           node-version-file: .node-version
-          cache: pnpm
+          cache: bun
 
       - name: Install Dependencies
-        id: pnpm-ci
-        run: pnpm install
+        id: bun-install
+        run: bun install --frozen-lockfile
 
       - name: Build
-        id: pnpm-build
-        run: pnpm run package
+        id: bun-build
+        run: bun run package
 
       - name: Prepare local action environment
         id: prepare-local-action
@@ -97,4 +97,4 @@ jobs:
 
       - name: Test local action
         id: test-local-action
-        run: pnpm run local-action
+        run: bun run local-action

@@ -1,14 +1,14 @@
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest, mock } from "bun:test";
 
 // Mock dependencies BEFORE importing
-jest.unstable_mockModule("@actions/core", () => ({
+mock.module("@actions/core", () => ({
 	debug: jest.fn(),
 	info: jest.fn(),
 	warning: jest.fn(),
 	setFailed: jest.fn(),
 }));
 
-jest.unstable_mockModule("@actions/github", () => ({
+mock.module("@actions/github", () => ({
 	getOctokit: jest.fn(() => ({
 		rest: {
 			issues: {
@@ -493,5 +493,14 @@ describe("ContentLabelHandler", () => {
 
 			expect(handler.getThreadType()).toBe("discussion");
 		});
+	});
+
+	it("uses performActions as a scanning alias", async () => {
+		const handler = new ContentLabelHandler({} as Config, mockActionConfig, "issue");
+		const threadData = { number: 1, title: "test", body: "", labels: [] };
+
+		await handler.performActions({}, threadData as any);
+
+		expect(mockOctokit.rest.issues.addLabels).not.toHaveBeenCalled();
 	});
 });

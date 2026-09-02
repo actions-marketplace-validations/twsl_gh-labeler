@@ -1,14 +1,14 @@
-import { beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { beforeEach, describe, expect, it, jest, mock } from "bun:test";
 
 // Mock dependencies
-jest.unstable_mockModule("@actions/core", () => ({
+mock.module("@actions/core", () => ({
 	debug: jest.fn(),
 	info: jest.fn(),
 	warning: jest.fn(),
 	setFailed: jest.fn(),
 }));
 
-jest.unstable_mockModule("@actions/github", () => ({
+mock.module("@actions/github", () => ({
 	getOctokit: jest.fn(),
 	context: {
 		repo: {
@@ -73,6 +73,31 @@ describe("IssueHandler", () => {
 	});
 
 	describe("performActions", () => {
+		it("handles unpin failures", async () => {
+			mockOctokit.graphql.mockRejectedValue(new Error("unpin failed"));
+			const config: Config = { labels: { add: { bug: { unpin: true } } } };
+
+			await expect(
+				new IssueHandler(config, actionConfig).performActions({ action: "labeled", label: { name: "bug" } }, {
+					node_id: "issue-node-id",
+				} as any),
+			).rejects.toThrow("Failed to unpin issue");
+		});
+		it("handles unpin, unsupported conversion, and projects", async () => {
+			const config: Config = {
+				labels: {
+					add: {
+						bug: { unpin: true, convert_to_discussion: true, projects: { add: ["project"] } },
+					},
+				},
+			};
+			const handler = new IssueHandler(config, actionConfig);
+			await handler.performActions({ action: "labeled", label: { name: "bug" } }, { node_id: "issue-node-id" } as any);
+
+			expect(mockOctokit.graphql).toHaveBeenCalledWith(expect.stringContaining("unpinIssue"), {
+				issueId: "issue-node-id",
+			});
+		});
 		it("should add comments to unlocked issue", async () => {
 			const config: Config = {
 				labels: {

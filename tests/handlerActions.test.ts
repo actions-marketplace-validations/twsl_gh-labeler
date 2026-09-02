@@ -1,8 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals";
+import { afterEach, beforeEach, describe, expect, it, jest, mock } from "bun:test";
+import * as coreFixture from "./fixtures/core";
+import * as githubFixture from "./fixtures/github";
 
 // Mock dependencies
-jest.unstable_mockModule("@actions/core", () => import("./fixtures/core"));
-jest.unstable_mockModule("@actions/github", () => import("./fixtures/github"));
+mock.module("@actions/core", () => coreFixture);
+mock.module("@actions/github", () => githubFixture);
 
 const { IssueHandler } = await import("../src/handlers/issueHandler");
 const { PullRequestHandler } = await import("../src/handlers/pullRequestHandler");
@@ -400,6 +402,140 @@ describe("Handler Actions with Config Inheritance", () => {
 	});
 
 	describe("PullRequestHandler", () => {
+		it("handles PR labels, assignees, lock, and reviewer variants", async () => {
+			const config: Config = {
+				labels: {
+					add: {
+						full: {
+							prs: {
+								labels: { add: { one: {}, two: {} }, remove: { stale: {} } },
+								assignees: { add: ["owner"], remove: ["old-owner"] },
+								reviewers: { add: ["author"], remove: ["allReviewers", "specific"] },
+								lock: true,
+								lock_reason: "resolved",
+							},
+						},
+					},
+				},
+			};
+			await new PullRequestHandler(config, actionConfig).performActions(
+				{ action: "labeled", label: { name: "full" } },
+				{
+					number: 1,
+					state: "open",
+					locked: false,
+					user: { login: "author" },
+					labels: [{ name: "stale" }],
+					requested_reviewers: [{ login: "requested" }, { name: "team" }],
+				} as any,
+			);
+
+			expect(mockOctokit.rest.issues.addLabels).toHaveBeenCalledWith(
+				expect.objectContaining({ labels: ["one", "two"] }),
+			);
+			expect(mockOctokit.rest.issues.removeLabel).toHaveBeenCalledWith(expect.objectContaining({ name: "stale" }));
+			expect(mockOctokit.rest.issues.addAssignees).toHaveBeenCalled();
+			expect(mockOctokit.rest.issues.removeAssignees).toHaveBeenCalled();
+			expect(mockOctokit.rest.issues.lock).toHaveBeenCalledWith(expect.objectContaining({ lock_reason: "resolved" }));
+		});
+
+		it("handles reviewer and review API failures", async () => {
+			const config: Config = {
+				labels: {
+					add: {
+						review: {
+							prs: {
+								reviewers: { add: ["reviewer1"], remove: ["reviewer2"] },
+								request_changes: true,
+								approve: true,
+							},
+						},
+					},
+				},
+			};
+			mockOctokit.rest.pulls.requestReviewers.mockRejectedValue(new Error("add failed"));
+			mockOctokit.rest.pulls.removeRequestedReviewers.mockRejectedValue(new Error("remove failed"));
+			mockOctokit.rest.pulls.createReview.mockRejectedValue(new Error("review failed"));
+
+			await expect(
+				new PullRequestHandler(config, actionConfig).performActions({ action: "labeled", label: { name: "review" } }, {
+					number: 1,
+					state: "open",
+					user: { login: "author" },
+					labels: [],
+				} as any),
+			).rejects.toThrow("Failed to add reviewers");
+
+			expect(mockOctokit.rest.pulls.requestReviewers).toHaveBeenCalled();
+			expect(mockOctokit.rest.pulls.removeRequestedReviewers).not.toHaveBeenCalled();
+			expect(mockOctokit.rest.pulls.createReview).not.toHaveBeenCalled();
+		});
+
+		it("handles reviewer removal and review creation failures", async () => {
+			const config: Config = {
+				labels: {
+					add: {
+						review: {
+							prs: { reviewers: { remove: ["reviewer"] }, request_changes: true, approve: true },
+						},
+					},
+				},
+			};
+			mockOctokit.rest.pulls.removeRequestedReviewers.mockRejectedValue(new Error("remove failed"));
+
+			await expect(
+				new PullRequestHandler(config, actionConfig).performActions({ action: "labeled", label: { name: "review" } }, {
+					number: 1,
+					state: "open",
+					labels: [],
+				} as any),
+			).rejects.toThrow("Failed to remove reviewers");
+
+			mockOctokit.rest.pulls.removeRequestedReviewers.mockResolvedValue({});
+			mockOctokit.rest.pulls.createReview.mockRejectedValue(new Error("review failed"));
+			await expect(
+				new PullRequestHandler(config, actionConfig).performActions({ action: "labeled", label: { name: "review" } }, {
+					number: 1,
+					state: "open",
+					labels: [],
+				} as any),
+			).rejects.toThrow("Failed to create request_changes review");
+		});
+
+		it("handles draft-state update failures", async () => {
+			const config: Config = {
+				labels: { add: { draft: { prs: { draft: true } } } },
+			};
+			mockOctokit.graphql.mockRejectedValue(new Error("draft failed"));
+
+			await expect(
+				new PullRequestHandler(config, actionConfig).performActions({ action: "labeled", label: { name: "draft" } }, {
+					number: 1,
+					node_id: "pr-node",
+					draft: false,
+					state: "open",
+					labels: [],
+				} as any),
+			).rejects.toThrow("Failed to update PR draft state to true");
+		});
+
+		it("skips unchanged draft and inactive close/reopen states", async () => {
+			const config: Config = {
+				labels: {
+					add: {
+						state: { prs: { draft: false } },
+					},
+				},
+			};
+
+			await new PullRequestHandler(config, actionConfig).performActions(
+				{ action: "labeled", label: { name: "state" } },
+				{ number: 1, state: "open", draft: false, locked: false, labels: [] } as any,
+			);
+
+			expect(mockOctokit.rest.pulls.update).not.toHaveBeenCalled();
+			expect(mockOctokit.graphql).not.toHaveBeenCalled();
+		});
 		it("should handle PR-specific reviewers", async () => {
 			const config: Config = {
 				labels: {

@@ -28,7 +28,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
 .env*
@@ -46,9 +45,6 @@ node_modules/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
-
-# pnpm
-.pnpm-store/
 
 # cache
 cache/
@@ -152,6 +148,3 @@ __tests__/runner/*
 # IDE files
 .idea
 *.code-workspace
-
-# Dist
-dist/

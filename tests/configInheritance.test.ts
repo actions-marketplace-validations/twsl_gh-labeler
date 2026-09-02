@@ -1,4 +1,4 @@
-import { describe, expect, it } from "@jest/globals";
+import { describe, expect, it } from "bun:test";
 import type Config from "@/models/internal/config";
 import type Actions from "@/models/internal/config/actions";
 
@@ -16,7 +16,7 @@ describe("Config Inheritance", () => {
 			};
 
 			expect(config.labels?.add).toBeDefined();
-			const bugAction = (config.labels?.add as Record<string, Actions>).bug;
+			const bugAction = ((config.labels?.add ?? {}) as Record<string, Actions>).bug;
 			expect(bugAction.comments).toEqual(["This is a bug report"]);
 		});
 
@@ -39,7 +39,7 @@ describe("Config Inheritance", () => {
 				},
 			};
 
-			const bugAction = (config.labels?.add as Record<string, Actions>).bug;
+			const bugAction = ((config.labels?.add ?? {}) as Record<string, Actions>).bug;
 			expect(bugAction.comments).toEqual(["Root level comment"]);
 			expect(bugAction.issues?.assignees?.add).toEqual(["user1"]);
 			expect(bugAction.issues?.close).toBe(true);
@@ -68,7 +68,7 @@ describe("Config Inheritance", () => {
 				},
 			};
 
-			const action = (config.labels?.add as Record<string, Actions>)["needs-review"];
+			const action = ((config.labels?.add ?? {}) as Record<string, Actions>)["needs-review"];
 			expect(action.prs?.reviewers?.add).toEqual(["reviewer1", "reviewer2"]);
 			expect(action.prs?.assignees?.add).toEqual(["assignee1"]);
 		});
@@ -89,7 +89,7 @@ describe("Config Inheritance", () => {
 				},
 			};
 
-			const action = (config.labels?.add as Record<string, Actions>).question;
+			const action = ((config.labels?.add ?? {}) as Record<string, Actions>).question;
 			expect(action.discussions?.category).toBe("Q&A");
 			expect(action.discussions?.close).toBe(true);
 			expect(action.discussions?.close_reason).toBe("resolved");
@@ -112,7 +112,7 @@ describe("Config Inheritance", () => {
 			};
 
 			expect(config.labels?.remove).toBeDefined();
-			const wipAction = (config.labels?.remove as Record<string, Actions>).wip;
+			const wipAction = ((config.labels?.remove ?? {}) as Record<string, Actions>).wip;
 			expect(wipAction.comments).toEqual(["No longer WIP"]);
 			expect(wipAction.prs?.reviewers?.add).toEqual(["reviewer1"]);
 		});
@@ -162,7 +162,7 @@ describe("Config Inheritance", () => {
 				},
 			};
 
-			const secAction = (config.labels?.add as Record<string, Actions>).security;
+			const secAction = ((config.labels?.add ?? {}) as Record<string, Actions>).security;
 			expect(secAction.labels?.add).toEqual(["high-priority", "needs-triage"]);
 			expect(secAction.issues?.labels?.add).toEqual(["verified"]);
 			expect(secAction.prs?.labels?.add).toEqual(["security-review"]);
@@ -227,7 +227,7 @@ describe("Config Inheritance", () => {
 				},
 			};
 
-			const action = (config.labels?.add as Record<string, Actions>).test;
+			const action = ((config.labels?.add ?? {}) as Record<string, Actions>).test;
 			expect(action.comments).toBeDefined();
 			expect(action.labels?.add).toBeDefined();
 			expect(action.issues?.comments).toBeDefined();
@@ -255,7 +255,7 @@ describe("Config Inheritance", () => {
 				},
 			};
 
-			const action = (config.labels?.add as Record<string, Actions>)["multi-type"];
+			const action = ((config.labels?.add ?? {}) as Record<string, Actions>)["multi-type"];
 			expect(action.issues?.close).toBe(true);
 			expect(action.prs?.close).toBe(false);
 			expect(action.discussions?.category).toBe("General");
@@ -320,7 +320,7 @@ describe("Config Inheritance", () => {
 				},
 			};
 
-			const action = (config.labels?.add as Record<string, Actions>).test;
+			const action = ((config.labels?.add ?? {}) as Record<string, Actions>).test;
 			expect(action.issues?.assignees?.add).toEqual(["user1"]);
 			expect(action.issues?.assignees?.remove).toEqual(["user2"]);
 			expect(action.prs?.reviewers?.add).toEqual(["reviewer1"]);
@@ -347,7 +347,7 @@ describe("Config Inheritance", () => {
 				},
 			};
 
-			const action = (config.labels?.add as Record<string, Actions>).milestone;
+			const action = ((config.labels?.add ?? {}) as Record<string, Actions>).milestone;
 			expect(action.issues?.milestones?.add).toEqual(["v1.0"]);
 			expect(action.issues?.projects?.add).toEqual(["Project A"]);
 		});
