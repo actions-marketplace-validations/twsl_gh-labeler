@@ -2,7 +2,7 @@
 
 [![GitHub Super-Linter](https://github.com/twsl/gh-labeler/actions/workflows/linter.yml/badge.svg)](https://github.com/super-linter/super-linter)
 ![CI](https://github.com/twsl/gh-labeler/actions/workflows/ci.yml/badge.svg)
-[![Publish Release Refs](https://github.com/twsl/gh-labeler/actions/workflows/manage-version-tags.yml/badge.svg)](https://github.com/twsl/gh-labeler/actions/workflows/manage-version-tags.yml)
+[![Release](https://github.com/twsl/gh-labeler/actions/workflows/release.yaml/badge.svg)](https://github.com/twsl/gh-labeler/actions/workflows/release.yaml)
 [![CodeQL](https://github.com/twsl/gh-labeler/actions/workflows/codeql-analysis.yml/badge.svg)](https://github.com/twsl/gh-labeler/actions/workflows/codeql-analysis.yml)
 
 gh-labeler is a GitHub Action that applies labels and follow-up actions to
