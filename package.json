@@ -41,8 +41,8 @@
 	"scripts": {
 		"bundle": "bun run format && bun run package",
 		"coverage": "bun test --parallel --timeout=15000 --coverage",
-		"format": "bun x @biomejs/biome format --write .devcontainer .vscode biome.json bunfig.toml data package.json script src tests tsconfig.base.json tsconfig.json",
-		"lint": "bun x @biomejs/biome lint --write ./src ./tests",
+		"format": "bun x @biomejs/biome format --write .",
+		"lint": "bun x @biomejs/biome lint --write .",
 		"local-action": "bun x @github/local-action . src/main.ts .env",
 		"package": "bun build src/index.ts --outdir dist --entry-naming=index.js --target=node --format=esm --sourcemap=external",
 		"package:watch": "bun build src/index.ts --outdir dist --entry-naming=index.js --target=node --format=esm --sourcemap=external --watch",
