@@ -26196,7 +26196,7 @@ var require_package = __commonJS(function(exports, module) {
   module.exports = {
     name: "joi",
     description: "Object schema validation",
-    version: "18.2.5",
+    version: "18.2.8",
     repository: {
       url: "git://github.com/hapijs/joi.git",
       type: "git"
@@ -27095,7 +27095,7 @@ var require_errors3 = __commonJS(function(exports) {
 
 // node_modules/joi/lib/ref.js
 var require_ref = __commonJS(function(exports) {
-  var { assert, clone, reach } = require_lib2();
+  var { assert, reach } = require_lib2();
   var Common = require_common();
   var Template;
   var internals = {
@@ -27364,7 +27364,7 @@ var require_ref = __commonJS(function(exports) {
     }
     clone() {
       const copy = new exports.Manager;
-      copy.refs = clone(this.refs);
+      copy.refs = this.refs.slice();
       return copy;
     }
     reset() {
@@ -29033,8 +29033,12 @@ var require_modify = __commonJS(function(exports) {
     }
     clone() {
       const clone = new internals.Ids;
-      clone._byId = new Map(this._byId);
-      clone._byKey = new Map(this._byKey);
+      if (this._byId.size) {
+        clone._byId = new Map(this._byId);
+      }
+      if (this._byKey.size) {
+        clone._byKey = new Map(this._byKey);
+      }
       clone._schemaChain = this._schemaChain;
       return clone;
     }
@@ -29480,14 +29484,14 @@ var require_validator = __commonJS(function(exports) {
     }
     snapshot() {
       this._snapshots.push({
-        externals: this.externals.slice(),
-        warnings: this.warnings.slice()
+        externals: this.externals.length,
+        warnings: this.warnings.length
       });
     }
     restore() {
       const snapshot = this._snapshots.pop();
-      this.externals = snapshot.externals;
-      this.warnings = snapshot.warnings;
+      this.externals.length = snapshot.externals;
+      this.warnings.length = snapshot.warnings;
     }
     commit() {
       this._snapshots.pop();
@@ -29530,6 +29534,9 @@ var require_validator = __commonJS(function(exports) {
       if (result) {
         return result;
       }
+    }
+    if (schema._flags.failover !== undefined) {
+      state.snapshot();
     }
     const createError = (code, local, localState) => schema.$_createError(code, value, local, localState || state, prefs);
     const helpers = {
@@ -29703,12 +29710,21 @@ var require_validator = __commonJS(function(exports) {
   internals.finalize = function(value, errors2, helpers) {
     errors2 = errors2 || [];
     const { schema, state, prefs } = helpers;
-    if (errors2.length) {
-      const failover = internals.default("failover", undefined, errors2, helpers);
-      if (failover !== undefined) {
-        state.mainstay.tracer.value(state, "failover", value, failover);
-        value = failover;
-        errors2 = [];
+    if (schema._flags.failover !== undefined) {
+      let applied = false;
+      if (errors2.length) {
+        const failover = internals.default("failover", undefined, errors2, helpers);
+        if (failover !== undefined) {
+          state.mainstay.tracer.value(state, "failover", value, failover);
+          value = failover;
+          errors2 = [];
+          applied = true;
+        }
+      }
+      if (applied) {
+        state.restore();
+      } else {
+        state.commit();
       }
     }
     if (errors2.length && schema._flags.error) {
@@ -30511,8 +30527,9 @@ var require_base = __commonJS(function(exports, module) {
       assert(definition, "Unknown rule", rule.method);
       const obj = this.clone();
       if (args) {
-        assert(Object.keys(args).length === 1 || Object.keys(args).length === this._definition.rules[rule.name].args.length, "Invalid rule definition for", this.type, rule.name);
-        for (const key of Object.keys(args)) {
+        const argKeys = Object.keys(args);
+        assert(argKeys.length === 1 || argKeys.length === this._definition.rules[rule.name].args.length, "Invalid rule definition for", this.type, rule.name);
+        for (const key of argKeys) {
           let arg = args[key];
           if (definition.argsByName) {
             const resolver = definition.argsByName.get(key);
@@ -30649,7 +30666,7 @@ var require_base = __commonJS(function(exports, module) {
       target._valids = this._valids && this._valids.clone();
       target._invalids = this._invalids && this._invalids.clone();
       target._rules = this._rules.slice();
-      target._singleRules = clone(this._singleRules, { shallow: true });
+      target._singleRules = new Map(this._singleRules);
       target._refs = this._refs.clone();
       target._flags = Object.assign({}, this._flags);
       target._cache = null;
@@ -32841,11 +32858,7 @@ var require_keys = __commonJS(function(exports, module) {
     },
     rebuild(schema) {
       if (schema.$_terms.keys) {
-        const topo = new Topo.Sorter;
-        for (const child of schema.$_terms.keys) {
-          Common.tryWithPath(() => topo.add(child, { after: child.schema.$_rootReferences(), group: child.key }), child.key);
-        }
-        schema.$_terms.keys = new internals.Keys(...topo.nodes);
+        schema.$_terms.keys = new internals.Keys(...internals.sortKeys(schema.$_terms.keys));
       }
     },
     manifest: {
@@ -33067,6 +33080,17 @@ var require_keys = __commonJS(function(exports, module) {
       context3.present = present;
       context3.presentWithLabels = internals.keysToLabels(schema, present);
       return { code: "object.xor", context: context3 };
+    }
+  };
+  internals.sortKeys = function(keys, manual = true) {
+    const topo = new Topo.Sorter;
+    for (const child of keys) {
+      Common.tryWithPath(() => topo.add(child, { after: child.schema.$_rootReferences(), group: child.key, manual }), child.key);
+    }
+    try {
+      return topo.sort();
+    } catch {
+      return internals.sortKeys(keys, false);
     }
   };
   internals.keysToLabels = function(schema, keys) {
@@ -36851,8 +36875,8 @@ var require_string2 = __commonJS(function(exports, module) {
     if (!Common.isIsoDate(value)) {
       return null;
     }
-    if (/.*T.*[+-]\d\d$/.test(value)) {
-      value += "00";
+    if (/T.*[+-]\d\d$/.test(value)) {
+      value += ":00";
     }
     const date = new Date(value);
     if (isNaN(date.getTime())) {
@@ -42319,4 +42343,4 @@ ${errorMessages}`);
 // src/index.ts
 run();
 
-//# debugId=86DDB433D25306B064756E2164756E21
+//# debugId=4EED05DA10EE5DD764756E2164756E21

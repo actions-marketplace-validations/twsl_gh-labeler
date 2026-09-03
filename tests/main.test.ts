@@ -99,14 +99,16 @@ const mockValidationError = {
 	value: undefined,
 };
 
-const mockSchemaValidate = jest.fn((input: ActionConfigInput): ValidationResult => ({
-	error: undefined,
-	value: {
-		...input,
-		"config-path": input["config-path"] || ".github/gh-labeler.yaml",
-		process: Array.isArray(input.process) && input.process.length > 0 ? input.process : ["issue", "pr", "discussion"],
-	},
-}));
+const mockSchemaValidate = jest.fn(
+	(input: ActionConfigInput): ValidationResult => ({
+		error: undefined,
+		value: {
+			...input,
+			"config-path": input["config-path"] || ".github/gh-labeler.yaml",
+			process: Array.isArray(input.process) && input.process.length > 0 ? input.process : ["issue", "pr", "discussion"],
+		},
+	}),
+);
 
 const validateMock = jest.fn((input: ActionConfigInput, _options?: { abortEarly?: boolean }) =>
 	mockSchemaValidate(input),
@@ -203,10 +205,12 @@ const resetMocks = () => {
 
 const { sampleConfig, configWithContentRules } = await import("./fixtures/config");
 const { createIssuePayload, createPullRequestPayload, createDiscussionPayload } = await import("./fixtures/payloads");
-const { createComplexIssuePayload, createComplexPRPayload, createComplexDiscussionPayload } =
-	await import("./fixtures/complexPayloads");
-const { configWithSpecialCharacters, largeConfig, configWithEmptyActions, configWithComplexActions } =
-	await import("./fixtures/configScenarios");
+const { createComplexIssuePayload, createComplexPRPayload, createComplexDiscussionPayload } = await import(
+	"./fixtures/complexPayloads"
+);
+const { configWithSpecialCharacters, largeConfig, configWithEmptyActions, configWithComplexActions } = await import(
+	"./fixtures/configScenarios"
+);
 const { testInputConfigs } = await import("./fixtures/testHelpers");
 
 describe("main.ts", () => {
