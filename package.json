@@ -44,8 +44,8 @@
 		"format": "bun x @biomejs/biome format --write .",
 		"lint": "bun x @biomejs/biome lint --write .",
 		"local-action": "bun x @github/local-action . src/main.ts .env",
-		"package": "bun build src/index.ts --outdir dist --entry-naming=index.js --target=node --format=esm --sourcemap=external",
-		"package:watch": "bun build src/index.ts --outdir dist --entry-naming=index.js --target=node --format=esm --sourcemap=external --watch",
+		"package": "bun build src/index.ts --production --outdir dist --entry-naming=index.js --target=node --format=esm --sourcemap=external",
+		"package:watch": "bun build src/index.ts --production --outdir dist --entry-naming=index.js --target=node --format=esm --sourcemap=external --watch",
 		"types": "ts-node ./scripts/types.ts",
 		"test": "bun test --parallel --timeout=15000",
 		"all": "bun run format && bun run lint && bun run test && bun run coverage && bun run package"

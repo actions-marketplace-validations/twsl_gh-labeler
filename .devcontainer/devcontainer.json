@@ -21,7 +21,7 @@
 	// Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand": "bun install --frozen-lockfile",
 	// Use 'postCreateCommand' to run commands after the container is started.
-	"postStartCommand": "bun install --frozen-lockfile",
+	"postStartCommand": "bun pm pkg set packageManager=bun@$(bun --version) && bun install",
 	// Configure tool-specific properties.
 	"customizations": {
 		"vscode": {
