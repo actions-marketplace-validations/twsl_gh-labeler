@@ -41,11 +41,11 @@
 	"scripts": {
 		"bundle": "bun run format && bun run package",
 		"coverage": "bun test --parallel --timeout=15000 --coverage",
-		"format": "bun x @biomejs/biome format --write .",
-		"lint": "bun x @biomejs/biome lint --write .",
+		"format": "bun biome format --write .",
+		"lint": "bun biome lint --write .",
 		"local-action": "bun x @github/local-action . src/main.ts .env",
-		"package": "bun build src/index.ts --production --outdir dist --entry-naming=index.js --target=node --format=esm --sourcemap=external",
-		"package:watch": "bun build src/index.ts --production --outdir dist --entry-naming=index.js --target=node --format=esm --sourcemap=external --watch",
+		"package": "bun build src/index.ts --production --outdir dist --entry-naming=index.js --target=node --format=esm --sourcemap=none",
+		"package:watch": "bun run package --watch",
 		"types": "ts-node ./scripts/types.ts",
 		"test": "bun test --parallel --timeout=15000",
 		"all": "bun run format && bun run lint && bun run test && bun run coverage && bun run package"
