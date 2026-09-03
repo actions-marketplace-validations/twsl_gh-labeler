@@ -179,14 +179,14 @@ This repository uses TypeScript, Bun, and Biome.
 
 ### Commands
 
-| Command             | Purpose                                             |
-| ------------------- | --------------------------------------------------- |
-| `bun run format`    | Format repository code and config files with Biome. |
-| `bun run lint`      | Run Biome linting.                                  |
-| `bun run test`      | Run the Bun test suite.                             |
-| `bun run coverage`  | Run tests with coverage reporting.                  |
-| `bun run package`   | Build the action bundle into `dist/`.               |
-| `bun run all`       | Format, lint, test, collect coverage, and package.  |
+| Command            | Purpose                                             |
+| ------------------ | --------------------------------------------------- |
+| `bun run format`   | Format repository code and config files with Biome. |
+| `bun run lint`     | Run Biome linting.                                  |
+| `bun run test`     | Run the Bun test suite.                             |
+| `bun run coverage` | Run tests with coverage reporting.                  |
+| `bun run package`  | Build the action bundle into `dist/`.               |
+| `bun run all`      | Format, lint, test, collect coverage, and package.  |
 
 Install dependencies with `bun install --frozen-lockfile`. The generated
 `dist/` bundle is committed because GitHub executes `dist/index.js` directly
