@@ -63,8 +63,8 @@
 		"@biomejs/biome": "^2.5.15",
 		"@github/local-action": "^7.0.1",
 		"@types/js-yaml": "^4.0.9",
-		"@types/lodash": "^4.17.25",
-		"@types/node": "^26.6.4",
+		"@types/lodash": "^4.17.26",
+		"@types/node": "^26.6.5",
 		"joi-to-typescript": "^4.15.0",
 		"ts-node": "^10.9.2",
 		"typescript": "^6.0.3"
