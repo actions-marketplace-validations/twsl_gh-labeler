@@ -8,7 +8,7 @@
         "@actions/core": "^3.0.1",
         "@actions/github": "^9.1.1",
         "@octokit/webhooks-types": "^7.6.1",
-        "joi": "^18.2.9",
+        "joi": "^18.3.0",
         "lodash": "^4.18.1",
         "yaml": "^2.9.1",
       },
@@ -377,7 +377,7 @@
 
     "jackspeak": ["jackspeak@3.4.3", "", { "dependencies": { "@isaacs/cliui": "8.0.2" }, "optionalDependencies": { "@pkgjs/parseargs": "0.11.0" } }, "sha512-OGlZQpz2yfahA/Rd1Y8Cd9SIEsqvXkLVoSw/cgwhnhFMDbsQFeZYoJJ7bIZBS9BcamUW96asq/npPWugM+RQBw=="],
 
-    "joi": ["joi@18.2.9", "", { "dependencies": { "@hapi/address": "^5.1.1", "@hapi/formula": "^3.0.2", "@hapi/hoek": "^11.0.7", "@hapi/pinpoint": "^2.0.1", "@hapi/tlds": "^1.1.1", "@hapi/topo": "^6.0.2", "@standard-schema/spec": "^1.1.0" } }, "sha512-2mD929bUVKUhOLQQEVhlf6EZ0Mlo0DeRb5MO7cViR9AXLtBauuccEtB1py9Ocxpo/P7ucnh442iY/iOwrh3IQw=="],
+    "joi": ["joi@18.3.0", "", { "dependencies": { "@hapi/address": "^5.1.1", "@hapi/formula": "^3.0.2", "@hapi/hoek": "^11.0.7", "@hapi/pinpoint": "^2.0.1", "@hapi/tlds": "^1.1.1", "@hapi/topo": "^6.0.2", "@standard-schema/spec": "^1.1.0" } }, "sha512-/RwAK4BAfzcdbdFg073tzq4/xhY6Q7lMd5AmjqTL6pu0QFJdEmtswgm8BvgwXvOKuPNYQ8XrdQrrW/gF65LiNw=="],
 
     "joi-to-typescript": ["joi-to-typescript@4.15.0", "", { "peerDependencies": { "joi": "17.x" } }, "sha512-GT8+Q4OK2XGkhu8lFhHr94j8YByTBxPnYBXFmo3mAgVQNYxCG+2WLK92YqBpN9xwSatheyVu0SZvviI2SvXSSg=="],
 
