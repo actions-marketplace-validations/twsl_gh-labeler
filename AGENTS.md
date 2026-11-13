@@ -166,7 +166,7 @@ Handle these GitHub webhook events:
 
 - Entry: `src/index.ts`
 - Output: `dist/index.js`
-- Uses Bun's native bundler with Node-compatible ESM output and external sourcemaps
+- Uses Bun's native bundler with Node-compatible ESM output and external source maps
 - Action runs with: `using: node20` in `action.yml`
 
 ### Production Bundle
