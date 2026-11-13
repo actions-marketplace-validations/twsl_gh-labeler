@@ -86,8 +86,12 @@ describe("HandlerName", () => {
 
 	beforeEach(() => {
 		// Setup mocks
-		mockConfig = {/* ... */} as Config;
-		mockActionConfig = {/* ... */};
+		mockConfig = {
+			/* ... */
+		} as Config;
+		mockActionConfig = {
+			/* ... */
+		};
 		handler = new HandlerName(mockConfig, mockActionConfig);
 	});
 
