@@ -1,4 +1,4 @@
-# GitHub Copilot Instructions for gh-labeler
+# Agent Instructions for gh-labeler
 
 ## Project Overview
 
