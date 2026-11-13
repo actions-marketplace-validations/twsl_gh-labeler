@@ -1,4 +1,4 @@
-# GitHub Copilot Instructions for gh-labeler
+# Agent Instructions for gh-labeler
 
 ## Project Overview
 
@@ -86,8 +86,12 @@ describe("HandlerName", () => {
 
 	beforeEach(() => {
 		// Setup mocks
-		mockConfig = {/* ... */} as Config;
-		mockActionConfig = {/* ... */};
+		mockConfig = {
+			/* ... */
+		} as Config;
+		mockActionConfig = {
+			/* ... */
+		};
 		handler = new HandlerName(mockConfig, mockActionConfig);
 	});
 
@@ -162,7 +166,7 @@ Handle these GitHub webhook events:
 
 - Entry: `src/index.ts`
 - Output: `dist/index.js`
-- Uses Bun's native bundler with Node-compatible ESM output and external sourcemaps
+- Uses Bun's native bundler with Node-compatible ESM output and external source maps
 - Action runs with: `using: node20` in `action.yml`
 
 ### Production Bundle

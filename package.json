@@ -55,19 +55,19 @@
 		"@actions/core": "^3.0.1",
 		"@actions/github": "^9.1.1",
 		"@octokit/webhooks-types": "^7.6.1",
-		"joi": "^18.3.1",
+		"joi": "^18.3.2",
 		"lodash": "^4.18.1",
 		"yaml": "^2.9.1"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.6.4",
+		"@biomejs/biome": "^2.6.7",
 		"@github/local-action": "^7.0.1",
 		"@types/js-yaml": "^4.0.9",
 		"@types/lodash": "^4.17.27",
 		"@types/node": "^26.6.6",
 		"joi-to-typescript": "^4.15.0",
 		"ts-node": "^10.9.2",
-		"typescript": "^6.0.3"
+		"typescript": "^7.0.2"
 	},
-	"packageManager": "bun@1.4.0"
+	"packageManager": "bun@1.4.4"
 }
